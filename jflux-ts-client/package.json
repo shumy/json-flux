@@ -1,0 +1,22 @@
+{
+  "name": "jflux-ts-client",
+  "version": "0.1.0",
+  "author": "micaelpedrosa@gmail.com",
+  "license": "Apache-2.0",
+  "scripts": {
+    "tsc": "tsc",
+    "tsc:w": "tsc -w",
+    "pretest": "tsc test/*.test.ts --module commonjs",
+    "test": "mocha"
+  },
+  "main": "./dist/index.js",
+  "dependencies": {
+    "rxjs": "^5.2.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^3.4.35",
+    "@types/core-js": "^0.9.35",
+    "@types/mocha": "^2.2.39",
+    "chai": "^3.5.0"
+  }
+}

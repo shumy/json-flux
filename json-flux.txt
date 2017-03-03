@@ -1,0 +1,52 @@
+ json-flux protocol spec:
+  Models: (fire-and-forget, request/response, request/stream, subscribe/channel)
+  Command { SEND, REPLY, PUBLISH }
+  Flag    { SUBSCRIBE, COMPLETE, CANCEL, ERROR }
+
+ notes:
+  1) [id] is always needed to detect lost messages, in case of WS connection resets!
+  2) notation
+     (>>)  exactly one message needed
+     (<--) zero or more messages of this type
+     (|<<, |>>) in a sequence of several messages with pipe, one of them should appear.
+
+ (fire-and-forget)
+   >>  (PUBLISH) 			[ id, path, data? ]
+ 
+ (request/response)
+   >>  (SEND) 				[ id, path, data? ]
+   <<  (REPLY, ERROR?) 			[ id, (data|error)? ]
+
+ (request/stream)
+   >>  (SEND) 				[ id, path, data? ]
+   <<  (REPLY, SUBSCRIBE|ERROR) 	[ id, suid, error? ]
+   <-- (PUBLISH) 			[ id, suid, data ]
+   |<< (PUBLISH, COMPLETE|ERROR) 	[ id, suid, error? ]
+   |>> (PUBLISH, CANCEL)		[ id, suid ]
+
+ (subscribe/channel)
+   >>  (SEND, SUBSCRIBE)		[ id, path ]
+   <<  (REPLY, ERROR?)			[ id, suid, (data|error)? ]
+   <-- (PUBLISH) 			[ id, suid, data ]
+   |<< (PUBLISH, CANCEL|ERROR) 		[ id, suid, error? ]
+   |>> (PUBLISH, CANCEL)		[ id, suid ]
+
+-----------------------------------------------------------------------------------------------------
+Client Typescript API
+  notes:
+    1) use ES6 native Promise
+    2) use ES6 Observable proposal
+      spec: https://github.com/tc39/proposal-observable
+      impl: https://github.com/zenparsing/zen-observable or https://github.com/ReactiveX/RxJS
+
+  JFlux
+    config([url, ..])
+    connect([token, ..]): Promise<JFluxClient>
+  JFluxClient
+    publish(path: string, data?: JSON): void
+    call(path: string, data?: JSON): Promise<JSON> | Observable<JSON>
+    subscribe(path: string): Channel<JSON>
+    get paths(): TreeInfo
+
+-----------------------------------------------------------------------------------------------------
+Server Java API
