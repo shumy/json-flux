@@ -1,5 +1,6 @@
+dist/test/
 node_modules/
 src/
-karma.conf.js
 tsconfig.json
 global.txt
+.gitignore

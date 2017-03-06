@@ -6,10 +6,10 @@
   "scripts": {
     "tsc": "tsc",
     "tsc:w": "tsc -w",
-    "pretest": "tsc test/*.test.ts --module commonjs --outDir ./testBuild",
-    "test": "mocha ./testBuild/test/*.test.js"
+    "test": "mocha ./dist/test/*.test.js"
   },
-  "main": "./dist/index.js",
+  "main": "./dist/main/index.js",
+  "types": "./dist/main/index.d.ts",
   "dependencies": {
     "rxjs": "^5.2.0"
   },
