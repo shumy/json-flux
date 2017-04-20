@@ -1,0 +1,11 @@
+.gradle
+.settings
+.classpath
+.project
+build/
+bin/
+runtime/felix-cache/
+runtime/system-libs/
+runtime/bundle/**/*.jar
+runtime/run.bat
+runtime/run.sh
