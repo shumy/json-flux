@@ -11,25 +11,39 @@
      (|<<, |>>) in a sequence of several messages with pipe, one of them should appear.
 
  (fire-and-forget)
-   >>  (PUBLISH) 			[ id, path, data? ]
+   Client send a message to an available path, and ignore any reply, error or timeout
+   >>  (PUBLISH) 			            [ id, path, data? ]
  
- (request/response)
-   >>  (SEND) 				[ id, path, data? ]
-   <<  (REPLY, ERROR?) 			[ id, (data|error)? ]
+ (request/reply)
+   Client send a message to an available path and waits for a reply, error or timeout
+   >>  (SEND) 				            [ id, path, data? ]
+   <<  (REPLY, ERROR?) 			      [ id, (data|error)? ]
 
  (request/stream)
-   >>  (SEND) 				[ id, path, data? ]
+   Client send a message to an available path and waits for a stream subscription reply, error or timeout
+   Server publish stream data in a push message model until complete or error message, client also can close the stream prematurely with cancel.
+   >>  (SEND) 				            [ id, path, data? ]
    <<  (REPLY, SUBSCRIBE|ERROR) 	[ id, suid, error? ]
-   <-- (PUBLISH) 			[ id, suid, data ]
+   <-- (PUBLISH) 			            [ id, suid, data ]
    |<< (PUBLISH, COMPLETE|ERROR) 	[ id, suid, error? ]
-   |>> (PUBLISH, CANCEL)		[ id, suid ]
+   |>> (PUBLISH, CANCEL)		      [ id, suid ]
 
  (subscribe/channel)
-   >>  (SEND, SUBSCRIBE)		[ id, path ]
-   <<  (REPLY, ERROR?)			[ id, suid, (data|error)? ]
-   <-- (PUBLISH) 			[ id, suid, data ]
-   |<< (PUBLISH, CANCEL|ERROR) 		[ id, suid, error? ]
-   |>> (PUBLISH, CANCEL)		[ id, suid ]
+   Client try to subscribe to a channel (producer of continuous messages) and waits for acception, error or timeout.
+   Differently from request/stream general errors don't close the subscription, only connection failures!
+   Cancel messages from the client or the server can close it.
+   >>  (SEND, SUBSCRIBE)		      [ id, path ]
+   <<  (REPLY, ERROR?)			      [ id, suid, (data|error)? ]
+   <-- (PUBLISH, ERROR?) 			    [ id, suid, (data|error)? ]
+   |<< (PUBLISH, CANCEL) 		      [ id, suid ]
+   |>> (PUBLISH, CANCEL)		      [ id, suid ]
+
+Protocol rules:
+  SEND messages always expect a REPLY, in last case a timeout.
+  REPLY with success doesn't need an OK flag, it's implicit.
+  SUBSCRIBE messages don't have data.
+
+Creation and destruction of channels is not part of the spec, however messages that signal these events are part of the meta-protocol.
 
 -----------------------------------------------------------------------------------------------------
 Client Typescript API
@@ -48,5 +62,11 @@ Client Typescript API
     subscribe(path: string): Channel<JSON>
     get paths(): TreeInfo
 
+  Channel
+
+  Error {
+    code: number
+    message: string
+  }
 -----------------------------------------------------------------------------------------------------
 Server Java API
