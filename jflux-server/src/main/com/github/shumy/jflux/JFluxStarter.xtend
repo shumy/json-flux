@@ -11,14 +11,21 @@ class JFluxStarter {
   
   @Activate
   def void start() {
-    println('Activate JFlux')
-    ws = new WebSocketServer(false, 8080, '/websocket')
+    ws = new WebSocketServer(false, 8080, '/websocket')[
+      println('''Open(«Thread.currentThread.name»): «id»''')
+      onClose = [ println('''Close(«Thread.currentThread.name»): «id»''') ]
+      
+      onMessage = [ msg |
+        println('''Message(«Thread.currentThread.name»): «msg»''')
+        write(msg.toUpperCase)
+      ]
+    ]
+    
     ws.start
   }
   
   @Deactivate
   def void stop() {
-    println('Deactivate JFlux')
     ws.stop
   }
 }
