@@ -64,7 +64,8 @@ class WebSocketServer {
         logger.info('WebSocketServer available at {}', '''«IF ssl»wss«ELSE»ws«ENDIF»://127.0.0.1:«port»«path»''')
         ch.get.closeFuture.sync
         logger.info('WebSocketServer stopped')
-        
+      } catch(Throwable ex) {
+        ex.printStackTrace
       } finally {
         bossGroup.shutdownGracefully
         workerGroup.shutdownGracefully

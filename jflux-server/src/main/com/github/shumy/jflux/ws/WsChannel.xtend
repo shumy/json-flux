@@ -1,12 +1,13 @@
 package com.github.shumy.jflux.ws
 
+import com.github.shumy.jflux.pipeline.IChannel
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame
 import io.netty.handler.codec.http.websocketx.WebSocketFrame
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.slf4j.LoggerFactory
 
-class WsChannel {
+class WsChannel implements IChannel {
   static val logger = LoggerFactory.getLogger(WsChannel)
   
   val WebSocketServer srv
@@ -16,24 +17,31 @@ class WsChannel {
   @Accessors var (String) => void onMessage
   @Accessors var () => void onClose
   
-  def getId() { return ch.id.asShortText }
+  override getId() { return ch.id.asShortText }
   
-  def void write(String msg) {
-    ch.writeAndFlush(new TextWebSocketFrame(msg))
+  override send(String msg) {
+    logger.debug("Channel({}) -> SND-MSG: {}", id, msg)
+    
+    val frame = new TextWebSocketFrame(msg)
+    if (ch.eventLoop.inEventLoop)
+      ch.writeAndFlush(frame)
+    else ch.eventLoop.execute[
+      ch.writeAndFlush(frame)
+    ]
   }
   
-  def void close() {
+  override close() {
+    logger.debug("Channel({}) -> CLOSE", id)
     if (ch.open) ch.close
     
     srv.channels.remove(id)
     onClose?.apply
-    logger.debug("Channel close {}", id)
   }
   
   package new(WebSocketServer srv, Channel ch) {
     this.srv = srv
     this.ch = ch
-    logger.debug("Channel open {}", ch.id.asShortText)
+    logger.debug("Channel({}) -> OPEN", id)
   }
   
   package def nextFrame(WebSocketFrame frame) {
@@ -41,10 +49,10 @@ class WsChannel {
       sb.append(frame.text)
       
       if (frame.finalFragment) {
-        val txtMsg = sb.toString
+        val msg = sb.toString
         sb.length = 0
-        logger.debug("Channel {} text: {}", id, txtMsg)
-        onMessage?.apply(txtMsg)
+        logger.debug("Channel({}) -> RCV-MSG: {}", id, msg)
+        onMessage?.apply(msg)
       }
     } else //BinaryWebSocketFrame
       throw new UnsupportedOperationException('''Unsupported frame type: «frame.class.name»''')
