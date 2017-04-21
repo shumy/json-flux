@@ -20,10 +20,10 @@ class WebSocketServer {
   val boolean ssl
   val int port
   val String path
-  val (MChannel) => void onOpen
+  val (WsChannel) => void onOpen
   
   val ch = new AtomicReference<Channel>
-  val channels = new ConcurrentHashMap<String, MChannel>
+  package val channels = new ConcurrentHashMap<String, WsChannel>
   
   def void start() throws Exception {
     new Thread[
@@ -43,18 +43,17 @@ class WebSocketServer {
           //handler(new LoggingHandler(LogLevel.DEBUG))
           childHandler(new WebSocketServerInitializer(path, sslCtx, [
             //on channel open
-            val mch = new MChannel(it)
-            channels.put(mch.id, mch)
-            onOpen.apply(mch)
+            val wsch = new WsChannel(this, it)
+            channels.put(wsch.id, wsch)
+            onOpen.apply(wsch)
           ], [
             //on channel close
-            val mch = channels.remove(it)
-            if (mch !== null)
-              mch.close
-          ], [ id, msg |
-            //on channel message
-            val ch = channels.get(id)
-            ch?.onMessage?.apply(msg)
+            val wsch = channels.get(it)
+            wsch.close
+          ], [ id, frame |
+            //on channel frame
+            val wsch = channels.get(id)
+            wsch.nextFrame(frame)
           ], [ error |
             //on channel error
             error.printStackTrace
