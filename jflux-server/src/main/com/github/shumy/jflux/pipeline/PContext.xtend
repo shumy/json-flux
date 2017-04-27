@@ -3,23 +3,23 @@ package com.github.shumy.jflux.pipeline
 import java.util.Iterator
 import org.eclipse.xtend.lib.annotations.Accessors
 
-class PContext {
-  val Pipeline pipe
-  val Iterator<(PContext)=>void> iter
+class PContext<MSG> {
+  val Pipeline<MSG> pipe
+  val Iterator<(PContext<MSG>)=>void> iter
   val IChannel channel
   
-  @Accessors val PMessage msg
+  @Accessors val MSG msg
   
   boolean inFail = false
   
-  package new(Pipeline pipe, Iterator<(PContext)=>void> iter, IChannel channel, PMessage msg) {
+  package new(Pipeline<MSG> pipe, Iterator<(PContext<MSG>)=>void> iter, IChannel channel, MSG msg) {
     this.pipe = pipe
     this.iter = iter
     this.channel = channel
     this.msg = msg
   }
   
-  def void send(PMessage msg) {
+  def void send(MSG msg) {
     if(!inFail) {
       val txt = pipe.encoder.apply(msg)
       channel.send(txt)

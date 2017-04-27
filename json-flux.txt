@@ -17,13 +17,13 @@
  (request/reply)
    Client send a message to an available path and waits for a reply, error or timeout
    >>  (SEND) 				            [ id, path, data? ]
-   <<  (REPLY, ERROR?) 			      [ id, (data|error)? ]
+   <<  (REPLY, ERROR?) 			      [ id, (data | error)? ]
 
  (request/stream)
    Client send a message to an available path and waits for a stream subscription reply, error or timeout
    Server publish stream data in a push message model until complete or error message, client also can close the stream prematurely with cancel.
    >>  (SEND) 				            [ id, path, data? ]
-   <<  (REPLY, SUBSCRIBE|ERROR) 	[ id, suid, error? ]
+   <<  (REPLY, SUBSCRIBE|ERROR) 	[ id, (suid | error) ]
    <-- (PUBLISH) 			            [ id, suid, data ]
    |<< (PUBLISH, COMPLETE|ERROR) 	[ id, suid, error? ]
    |>> (PUBLISH, CANCEL)		      [ id, suid ]
@@ -33,8 +33,8 @@
    Differently from request/stream general errors don't close the subscription, only connection failures!
    Cancel messages from the client or the server can close it.
    >>  (SEND, SUBSCRIBE)		      [ id, path ]
-   <<  (REPLY, ERROR?)			      [ id, suid, (data|error)? ]
-   <-- (PUBLISH, ERROR?) 			    [ id, suid, (data|error)? ]
+   <<  (REPLY, ERROR?)			      [ id, (suid & data | error) ]
+   <-- (PUBLISH, ERROR?) 			    [ id, suid, (data | error) ]
    |<< (PUBLISH, CANCEL) 		      [ id, suid ]
    |>> (PUBLISH, CANCEL)		      [ id, suid ]
 

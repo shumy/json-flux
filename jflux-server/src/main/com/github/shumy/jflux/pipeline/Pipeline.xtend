@@ -5,20 +5,20 @@ import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 
 @FinalFieldsConstructor
-class Pipeline {
-  package val (String) => PMessage decoder
-  package val (PMessage) => String encoder
-  val handlers = new ArrayList<(PContext)=>void>
+class Pipeline<MSG> {
+  package val (String) => MSG decoder
+  package val (MSG) => String encoder
+  val handlers = new ArrayList<(PContext<MSG>)=>void>
   
   @Accessors(PUBLIC_SETTER) package var (Throwable) => void onFail
   
   def process(IChannel channel, String txt) {
     val msg = decoder.apply(txt)
-    val ctx = new PContext(this, handlers.iterator, channel, msg)
+    val ctx = new PContext<MSG>(this, handlers.iterator, channel, msg)
     ctx.next
   }
   
-  def handler((PContext)=>void handler) {
+  def handler((PContext<MSG>)=>void handler) {
     handlers.add(handler)
   }
 }

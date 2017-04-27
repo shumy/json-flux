@@ -1,7 +1,7 @@
 package com.github.shumy.jflux
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.github.shumy.jflux.pipeline.PMessage
+import com.github.shumy.jflux.msg.JMessage
 import com.github.shumy.jflux.pipeline.Pipeline
 import com.github.shumy.jflux.ws.WebSocketServer
 import org.osgi.service.component.annotations.Activate
@@ -15,11 +15,15 @@ class JFluxStarter {
   @Activate
   def void start() {
     val mapper = new ObjectMapper
-    val (String) => PMessage decoder = [ mapper.readValue(it, PMessage) ]
-    val (PMessage) => String encoder = [ mapper.writeValueAsString(it) ]
+    val (String) => JMessage decoder = [ mapper.readValue(it, JMessage) ]
+    val (JMessage) => String encoder = [ mapper.writeValueAsString(it) ]
     
-    val pipe = new Pipeline(decoder, encoder) => [
-      handler[ println(msg.toString) ]
+    val pipe = new Pipeline<JMessage>(decoder, encoder) => [
+      handler[
+        println(msg.toString)
+        val data = mapper.valueToTree(#{ 'x' -> 10, 'y' -> 25 })
+        send(JMessage.requestReply(msg.id, data))
+      ]
       onFail = [
         println('PIPELINE-ERROR:')
         printStackTrace
