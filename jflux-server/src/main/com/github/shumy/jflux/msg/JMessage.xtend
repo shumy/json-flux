@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonInclude.Include
 
 class JError {
-  public val Integer code
+  public val Integer code //use html codes
   public val String msg
   
   @JsonCreator new(
@@ -17,6 +17,8 @@ class JError {
     this.code = code
     this.msg = msg
   }
+  
+  override toString() '''{code:«code», msg:«msg»}'''
 }
 
 @JsonInclude(Include.NON_NULL)
@@ -49,8 +51,13 @@ class JMessage {
     
     this.error = error
     this.data = data
+  }
+  
+  def validateEntry() {
+    if (id === null || path === null)
+      return new JError(400, 'No mandatory fields (id, path)')
     
-    //TODO: apply some rules...
+    return null
   }
   
   static def replyError(Long id, JError error) {
@@ -89,5 +96,5 @@ class JMessage {
     new JMessage(id, Command.REPLY, null, suid, null, null, data)
   }
   
-  override toString() '''(id:«id», cmd:«cmd», flag:«flag», suid:«suid», path:«path», error:«error», data:«data»)'''
+  override toString() '''{id:«id», cmd:«cmd», flag:«flag», suid:«suid», path:«path», error:«error», data:«data»}'''
 }

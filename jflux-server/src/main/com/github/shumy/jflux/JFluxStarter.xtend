@@ -20,9 +20,17 @@ class JFluxStarter {
     
     val pipe = new Pipeline<JMessage>(decoder, encoder) => [
       handler[
-        println(msg.toString)
+        val vError = msg.validateEntry
+        if (vError !== null) {
+          send(JMessage.replyError(msg.id, vError))
+          return
+         }
+        
         val data = mapper.valueToTree(#{ 'x' -> 10, 'y' -> 25 })
-        send(JMessage.requestReply(msg.id, data))
+        val reply = JMessage.requestReply(msg.id, data)
+        
+        send(reply)
+        next
       ]
       onFail = [
         println('PIPELINE-ERROR:')
