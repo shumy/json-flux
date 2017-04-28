@@ -6,6 +6,7 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame
 import io.netty.handler.codec.http.websocketx.WebSocketFrame
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.slf4j.LoggerFactory
+import com.github.shumy.jflux.pipeline.Pipeline
 
 class WsChannel<MSG> implements IChannel<MSG> {
   static val logger = LoggerFactory.getLogger(WsChannel)
@@ -15,7 +16,7 @@ class WsChannel<MSG> implements IChannel<MSG> {
   
   val sb = new StringBuffer
   
-  @Accessors var (MSG) => void onMessage
+  var Pipeline<MSG> pipe
   @Accessors var () => void onClose
   
   override getId() { return ch.id.asShortText }
@@ -30,6 +31,10 @@ class WsChannel<MSG> implements IChannel<MSG> {
     else ch.eventLoop.execute[
       ch.writeAndFlush(frame)
     ]
+  }
+  
+  override link(Pipeline<MSG> pipe) {
+    this.pipe = pipe
   }
   
   override close() {
@@ -56,7 +61,7 @@ class WsChannel<MSG> implements IChannel<MSG> {
         logger.debug("Channel({}) -> RCV-MSG: {}", id, txt)
         
         val msg = srv.decoder.apply(txt)
-        onMessage?.apply(msg)
+        pipe?.process(this, msg)
       }
     } else //BinaryWebSocketFrame
       throw new UnsupportedOperationException('''Unsupported frame type: «frame.class.name»''')
