@@ -9,21 +9,23 @@ import java.util.UUID
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import java.util.Map
 
 @FinalFieldsConstructor
 class JStreamResult implements IStreamResult<Object> {
   public val String suid = UUID.randomUUID.toString
   
   val mapper = new ObjectMapper
+  val Map<String, JStreamResult> streams
   val PContext<JMessage> ctx
   
-  val isComplete = new AtomicBoolean(false)
   val onCancel = new AtomicReference<()=>void>
+  val isComplete = new AtomicBoolean(false)
   
   def void cancel() {
     if (!isComplete.get) {
-      onCancel.get?.apply
       isComplete.set = true
+      onCancel.get?.apply
     }
   }
   
@@ -40,15 +42,17 @@ class JStreamResult implements IStreamResult<Object> {
   
   override error(Throwable error) {
     if (!isComplete.get) {
-      ctx.send(JMessage.publishError(ctx.msg.id, suid, new JError(500, error.message)))
       isComplete.set = true
+      ctx.send(JMessage.publishError(ctx.msg.id, suid, new JError(500, error.message)))
+      streams.remove(suid)
     }
   }
   
   override complete() {
     if (!isComplete.get) {
-      ctx.send(JMessage.streamComplete(ctx.msg.id, suid))
       isComplete.set = true
+      ctx.send(JMessage.streamComplete(ctx.msg.id, suid))
+      streams.remove(suid)
     }
   }
 }

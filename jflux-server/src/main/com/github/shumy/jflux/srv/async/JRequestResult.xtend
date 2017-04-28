@@ -17,16 +17,16 @@ class JRequestResult implements IRequestResult<Object> {
   
   override resolve(Object data) {
     if (!isComplete.get) {
+      isComplete.set = true
       val value = mapper.valueToTree(data)
       ctx.send(JMessage.requestReply(ctx.msg.id, value))
-      isComplete.set = true
     }
   }
   
   override reject(Throwable error) {
     if (!isComplete.get) {
-      ctx.send(JMessage.replyError(ctx.msg.id, new JError(500, error.message)))
       isComplete.set = true
+      ctx.send(JMessage.replyError(ctx.msg.id, new JError(500, error.message)))
     }
   }
 }

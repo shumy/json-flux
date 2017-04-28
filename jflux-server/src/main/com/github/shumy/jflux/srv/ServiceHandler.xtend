@@ -70,7 +70,12 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
   def void processRequest(PContext<JMessage> it, Object ret) {
     if (ret instanceof IRequest) {
       new Thread[
-        ret.apply(new JRequestResult(it))
+        try {
+          ret.apply(new JRequestResult(it))
+        } catch (Throwable ex) {
+          ex.printStackTrace
+          send(JMessage.replyError(msg.id, new JError(500, ex.message)))
+        }
       ].start
       return
     }
@@ -80,13 +85,19 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
   }
   
   def void processStream(PContext<JMessage> it, Object ret) {
-    val sr = new JStreamResult(it)
+    val sr = new JStreamResult(streams, it)
     streams.put(sr.suid, sr)
     send(JMessage.streamReply(msg.id, sr.suid))
     
     new Thread[
-      val stream = ret as IStream<Object>
-      stream.apply(sr)
+      try {
+        val stream = ret as IStream<Object>
+        stream.apply(sr)
+      } catch (Throwable ex) {
+        ex.printStackTrace
+        streams.remove(sr.suid)
+        send(JMessage.publishError(msg.id, sr.suid, new JError(500, ex.message)))
+      }
     ].start
   }
 }
