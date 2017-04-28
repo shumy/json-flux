@@ -10,7 +10,7 @@ import org.osgi.service.component.annotations.Deactivate
 
 @Component
 class JFluxStarter {
-  var WebSocketServer ws
+  var WebSocketServer<JMessage> ws
   
   @Activate
   def void start() {
@@ -18,7 +18,7 @@ class JFluxStarter {
     val (String) => JMessage decoder = [ mapper.readValue(it, JMessage) ]
     val (JMessage) => String encoder = [ mapper.writeValueAsString(it) ]
     
-    val pipe = new Pipeline<JMessage>(decoder, encoder) => [
+    val pipe = new Pipeline<JMessage> => [
       handler[
         val vError = msg.validateEntry
         if (vError !== null) {
@@ -38,13 +38,13 @@ class JFluxStarter {
       ]
     ]
     
-    ws = new WebSocketServer(false, 8080, '/websocket')[
+    ws = new WebSocketServer<JMessage>(false, 8080, '/websocket', decoder, encoder)[
       println('''Open(«Thread.currentThread.name»): «id»''')
       onClose = [ println('''Close(«Thread.currentThread.name»): «id»''') ]
       
-      onMessage = [ json |
-        println('''Message(«Thread.currentThread.name»): «json»''')
-        pipe.process(it, json)
+      onMessage = [ msg |
+        println('''Message(«Thread.currentThread.name»): «msg»''')
+        pipe.process(it, msg)
       ]
     ]
     

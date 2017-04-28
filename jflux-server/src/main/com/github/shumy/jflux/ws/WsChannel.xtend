@@ -7,22 +7,24 @@ import io.netty.handler.codec.http.websocketx.WebSocketFrame
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.slf4j.LoggerFactory
 
-class WsChannel implements IChannel {
+class WsChannel<MSG> implements IChannel<MSG> {
   static val logger = LoggerFactory.getLogger(WsChannel)
   
-  val WebSocketServer srv
+  val WebSocketServer<MSG> srv
   val Channel ch
+  
   val sb = new StringBuffer
   
-  @Accessors var (String) => void onMessage
+  @Accessors var (MSG) => void onMessage
   @Accessors var () => void onClose
   
   override getId() { return ch.id.asShortText }
   
-  override send(String msg) {
-    logger.debug("Channel({}) -> SND-MSG: {}", id, msg)
+  override send(MSG msg) {
+    val txt = srv.encoder.apply(msg)
+    logger.debug("Channel({}) -> SND-MSG: {}", id, txt)
     
-    val frame = new TextWebSocketFrame(msg)
+    val frame = new TextWebSocketFrame(txt)
     if (ch.eventLoop.inEventLoop)
       ch.writeAndFlush(frame)
     else ch.eventLoop.execute[
@@ -38,7 +40,7 @@ class WsChannel implements IChannel {
     onClose?.apply
   }
   
-  package new(WebSocketServer srv, Channel ch) {
+  package new(WebSocketServer<MSG> srv, Channel ch) {
     this.srv = srv
     this.ch = ch
     logger.debug("Channel({}) -> OPEN", id)
@@ -49,9 +51,11 @@ class WsChannel implements IChannel {
       sb.append(frame.text)
       
       if (frame.finalFragment) {
-        val msg = sb.toString
+        val txt = sb.toString
         sb.length = 0
-        logger.debug("Channel({}) -> RCV-MSG: {}", id, msg)
+        logger.debug("Channel({}) -> RCV-MSG: {}", id, txt)
+        
+        val msg = srv.decoder.apply(txt)
         onMessage?.apply(msg)
       }
     } else //BinaryWebSocketFrame

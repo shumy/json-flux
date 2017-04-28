@@ -6,13 +6,13 @@ import org.eclipse.xtend.lib.annotations.Accessors
 class PContext<MSG> {
   val Pipeline<MSG> pipe
   val Iterator<(PContext<MSG>)=>void> iter
-  val IChannel channel
+  val IChannel<MSG> channel
   
   @Accessors val MSG msg
   
   boolean inFail = false
   
-  package new(Pipeline<MSG> pipe, Iterator<(PContext<MSG>)=>void> iter, IChannel channel, MSG msg) {
+  package new(Pipeline<MSG> pipe, Iterator<(PContext<MSG>)=>void> iter, IChannel<MSG> channel, MSG msg) {
     this.pipe = pipe
     this.iter = iter
     this.channel = channel
@@ -21,8 +21,7 @@ class PContext<MSG> {
   
   def void send(MSG msg) {
     if(!inFail) {
-      val txt = pipe.encoder.apply(msg)
-      channel.send(txt)
+      channel.send(msg)
     }
   }
   

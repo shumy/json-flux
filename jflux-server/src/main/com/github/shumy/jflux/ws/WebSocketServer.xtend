@@ -14,16 +14,18 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import org.slf4j.LoggerFactory
 
 @FinalFieldsConstructor
-class WebSocketServer {
+class WebSocketServer<MSG> {
   static val logger = LoggerFactory.getLogger(WebSocketServer)
   
-  val boolean ssl
-  val int port
-  val String path
-  val (WsChannel) => void onOpen
+  package val boolean ssl
+  package val int port
+  package val String path
+  package val (String) => MSG decoder
+  package val (MSG) => String encoder
+  val (WsChannel<MSG>) => void onOpen
   
   val ch = new AtomicReference<Channel>
-  package val channels = new ConcurrentHashMap<String, WsChannel>
+  package val channels = new ConcurrentHashMap<String, WsChannel<MSG>>
   
   def void start() throws Exception {
     new Thread[
@@ -43,7 +45,7 @@ class WebSocketServer {
           //handler(new LoggingHandler(LogLevel.DEBUG))
           childHandler(new WebSocketServerInitializer(path, sslCtx, [
             //on channel open
-            val wsch = new WsChannel(this, it)
+            val wsch = new WsChannel<MSG>(this, it)
             channels.put(wsch.id, wsch)
             onOpen.apply(wsch)
           ], [

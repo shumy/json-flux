@@ -1,7 +1,7 @@
 package com.github.shumy.jflux.pipeline
 
-interface IChannel {
+interface IChannel<MSG> {
   def String getId()
-  def void send(String msg)
+  def void send(MSG msg)
   def void close()
 }
