@@ -1,12 +1,14 @@
 package com.github.shumy.jflux.ws
 
 import com.github.shumy.jflux.pipeline.IChannel
+import com.github.shumy.jflux.pipeline.Pipeline
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame
 import io.netty.handler.codec.http.websocketx.WebSocketFrame
+import java.util.Map
+import java.util.concurrent.ConcurrentHashMap
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.slf4j.LoggerFactory
-import com.github.shumy.jflux.pipeline.Pipeline
 
 class WsChannel<MSG> implements IChannel<MSG> {
   static val logger = LoggerFactory.getLogger(WsChannel)
@@ -18,6 +20,8 @@ class WsChannel<MSG> implements IChannel<MSG> {
   
   var Pipeline<MSG> pipe
   @Accessors var () => void onClose
+  
+  @Accessors val Map<String, Object> store = new ConcurrentHashMap<String, Object>
   
   override getId() { return ch.id.asShortText }
   

@@ -10,12 +10,11 @@ import com.github.shumy.jflux.pipeline.PContext
 import com.github.shumy.jflux.srv.ServiceMethod.Type
 import com.github.shumy.jflux.srv.async.JRequestResult
 import com.github.shumy.jflux.srv.async.JStreamResult
-import java.util.concurrent.ConcurrentHashMap
+import java.util.Map
 
 class ServiceHandler implements (PContext<JMessage>)=>void {
   val mapper = new ObjectMapper
   val store = new ServiceStore(mapper)
-  val streams = new ConcurrentHashMap<String, JStreamResult>
   
   def void addService(Object srv) {
     store.addService(srv)
@@ -61,17 +60,18 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
     } else {
       //(SEND, SUBSCRIBE) or (PUBLISH, CANCEL)
       if (msg.flag == Flag.CANCEL) {
-        val stream = streams.remove(msg.suid)
+        val stream = channel.store.remove(msg.suid) as JStreamResult
         stream?.cancel
       }
     }
   }
   
   def void processRequest(PContext<JMessage> it, Object ret) {
-    if (ret instanceof IRequest) {
+    if (ret instanceof IRequest<?>) {
       new Thread[
         try {
-          ret.apply(new JRequestResult(it))
+          val request = ret as IRequest<Object>
+          request.apply(new JRequestResult(it))
         } catch (Throwable ex) {
           ex.printStackTrace
           send(JMessage.replyError(msg.id, new JError(500, ex.message)))
@@ -85,6 +85,7 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
   }
   
   def void processStream(PContext<JMessage> it, Object ret) {
+    val streams = channel.store as Map<String, JStreamResult>
     val sr = new JStreamResult(streams, it)
     streams.put(sr.suid, sr)
     send(JMessage.streamReply(msg.id, sr.suid))

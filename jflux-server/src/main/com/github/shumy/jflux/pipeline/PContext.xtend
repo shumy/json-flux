@@ -6,8 +6,8 @@ import org.eclipse.xtend.lib.annotations.Accessors
 class PContext<MSG> {
   val Pipeline<MSG> pipe
   val Iterator<(PContext<MSG>)=>void> iter
-  val IChannel<MSG> channel
   
+  @Accessors val IChannel<MSG> channel
   @Accessors val MSG msg
   
   boolean inFail = false

@@ -5,11 +5,11 @@ import com.github.shumy.jflux.api.IStreamResult
 import com.github.shumy.jflux.msg.JError
 import com.github.shumy.jflux.msg.JMessage
 import com.github.shumy.jflux.pipeline.PContext
+import java.util.Map
 import java.util.UUID
-import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import java.util.Map
+import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 
 @FinalFieldsConstructor
 class JStreamResult implements IStreamResult<Object> {
