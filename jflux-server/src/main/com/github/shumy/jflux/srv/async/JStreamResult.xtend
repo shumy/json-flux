@@ -5,7 +5,6 @@ import com.github.shumy.jflux.api.IStreamResult
 import com.github.shumy.jflux.msg.JError
 import com.github.shumy.jflux.msg.JMessage
 import com.github.shumy.jflux.pipeline.PContext
-import java.util.Map
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -13,10 +12,9 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 
 @FinalFieldsConstructor
 class JStreamResult implements IStreamResult<Object> {
-  public val String suid = UUID.randomUUID.toString
+  public val String suid = 'str:' + UUID.randomUUID.toString
   
   val mapper = new ObjectMapper
-  val Map<String, JStreamResult> streams
   val PContext<JMessage> ctx
   
   val onCancel = new AtomicReference<()=>void>
@@ -44,7 +42,7 @@ class JStreamResult implements IStreamResult<Object> {
     if (!isComplete.get) {
       isComplete.set = true
       ctx.send(JMessage.publishError(ctx.msg.id, suid, new JError(500, error.message)))
-      streams.remove(suid)
+      ctx.channel.store.remove(suid)
     }
   }
   
@@ -52,7 +50,7 @@ class JStreamResult implements IStreamResult<Object> {
     if (!isComplete.get) {
       isComplete.set = true
       ctx.send(JMessage.streamComplete(ctx.msg.id, suid))
-      streams.remove(suid)
+      ctx.channel.store.remove(suid)
     }
   }
 }

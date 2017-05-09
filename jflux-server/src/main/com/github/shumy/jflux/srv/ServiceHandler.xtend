@@ -10,7 +10,6 @@ import com.github.shumy.jflux.pipeline.PContext
 import com.github.shumy.jflux.srv.ServiceMethod.Type
 import com.github.shumy.jflux.srv.async.JRequestResult
 import com.github.shumy.jflux.srv.async.JStreamResult
-import java.util.Map
 
 class ServiceHandler implements (PContext<JMessage>)=>void {
   val mapper = new ObjectMapper
@@ -85,9 +84,8 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
   }
   
   def void processStream(PContext<JMessage> it, Object ret) {
-    val streams = channel.store as Map<String, JStreamResult>
-    val sr = new JStreamResult(streams, it)
-    streams.put(sr.suid, sr)
+    val sr = new JStreamResult(it)
+    channel.store.put(sr.suid, sr)
     send(JMessage.streamReply(msg.id, sr.suid))
     
     new Thread[
@@ -96,7 +94,7 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
         stream.apply(sr)
       } catch (Throwable ex) {
         ex.printStackTrace
-        streams.remove(sr.suid)
+        channel.store.remove(sr.suid)
         send(JMessage.publishError(msg.id, sr.suid, new JError(500, ex.message)))
       }
     ].start
