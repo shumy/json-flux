@@ -33,8 +33,12 @@ class HelloService {
   @Stream
   def IStream<String> multipleHello(List<String> names) {
     return [
-      for(n: names)
+      onCancel[ println('multipleHello -> CANCEL') ]
+      
+      for(n: names) {
+        Thread.sleep(1000)
         next('''multipleHello «n»''')
+      }
       complete
     ]
   }

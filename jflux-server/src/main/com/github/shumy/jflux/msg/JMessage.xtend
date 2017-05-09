@@ -54,8 +54,11 @@ class JMessage {
   }
   
   def validateEntry() {
-    if (id === null || cmd === null || path === null)
-      return new JError(400, 'No mandatory fields (id, cmd, path)')
+    if (cmd === null || path === null)
+      return new JError(400, 'No mandatory fields (cmd, path)')
+      
+    if (cmd === Command.SEND && id === null)
+      return new JError(400, 'No mandatory field (id)')
     
     if (cmd === Command.REPLY)
       return new JError(400, 'Receiving a reply is not valid!')

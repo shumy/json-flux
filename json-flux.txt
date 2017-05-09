@@ -4,7 +4,7 @@
   Flag    { SUBSCRIBE, COMPLETE, CANCEL, ERROR }
 
  notes:
-  1) [id] is always needed to detect lost messages, in case of WS connection resets!
+  1) [id] is always needed to detect lost messages, in case of WS connection resets ?
   2) notation
      (>>)  exactly one message needed
      (<--) zero or more messages of this type
@@ -12,7 +12,7 @@
 
  (fire-and-forget)
    Client send a message to an available path, and ignore any reply, error or timeout
-   >>  (PUBLISH) 			            [ id, path, data? ]
+   >>  (PUBLISH) 			            [ path, data? ]
  
  (request/reply)
    Client send a message to an available path and waits for a reply, error or timeout
@@ -26,7 +26,7 @@
    <<  (REPLY, SUBSCRIBE|ERROR) 	[ id, (suid | error) ]
    <-- (PUBLISH) 			            [ id, suid, data ]
    |<< (PUBLISH, COMPLETE|ERROR) 	[ id, suid, error? ]
-   |>> (PUBLISH, CANCEL)		      [ id, suid ]
+   |>> (PUBLISH, CANCEL)		      [ suid ]
 
  (subscribe/channel)
    Client try to subscribe to a channel (producer of continuous messages) and waits for acception, error or timeout.
@@ -36,7 +36,7 @@
    <<  (REPLY, ERROR?)			      [ id, (suid & data | error) ]
    <-- (PUBLISH, ERROR?) 			    [ id, suid, (data | error) ]
    |<< (PUBLISH, CANCEL) 		      [ id, suid ]
-   |>> (PUBLISH, CANCEL)		      [ id, suid ]
+   |>> (PUBLISH, CANCEL)		      [ suid ]
 
 Protocol rules:
   SEND messages always expect a REPLY, in last case a timeout.
@@ -54,13 +54,14 @@ Client Typescript API
       impl: https://github.com/zenparsing/zen-observable or https://github.com/ReactiveX/RxJS
 
   JFlux
-    config([url, ..])
-    connect([token, ..]): Promise<JFluxClient>
+    url
+    static client([token, ..]): JFluxClient
   JFluxClient
+    get paths(): Promise<TreeInfo>
     publish(path: string, data?: JSON): void
-    call(path: string, data?: JSON): Promise<JSON> | Observable<JSON>
-    subscribe(path: string): Channel<JSON>
-    get paths(): TreeInfo
+    request(path: string, data?: JSON): Promise<JSON>
+    stream(path: string, data?: JSON): Observable<JSON>
+    channel(path: string): Channel<JSON>
 
   Channel
 

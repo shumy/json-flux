@@ -7,6 +7,7 @@ import com.github.shumy.jflux.msg.JMessage
 import com.github.shumy.jflux.pipeline.PContext
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 
@@ -14,6 +15,7 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 class JStreamResult implements IStreamResult<Object> {
   public val String suid = 'str:' + UUID.randomUUID.toString
   
+  val msgId = new AtomicLong(0L)
   val mapper = new ObjectMapper
   val PContext<JMessage> ctx
   
@@ -34,14 +36,14 @@ class JStreamResult implements IStreamResult<Object> {
   override next(Object data) {
     if (!isComplete.get) {
       val value = mapper.valueToTree(data)
-      ctx.send(JMessage.publishData(ctx.msg.id, suid, value))
+      ctx.send(JMessage.publishData(msgId.incrementAndGet, suid, value))
     }
   }
   
   override error(Throwable error) {
     if (!isComplete.get) {
       isComplete.set = true
-      ctx.send(JMessage.publishError(ctx.msg.id, suid, new JError(500, error.message)))
+      ctx.send(JMessage.publishError(msgId.incrementAndGet, suid, new JError(500, error.message)))
       ctx.channel.store.remove(suid)
     }
   }
@@ -49,7 +51,7 @@ class JStreamResult implements IStreamResult<Object> {
   override complete() {
     if (!isComplete.get) {
       isComplete.set = true
-      ctx.send(JMessage.streamComplete(ctx.msg.id, suid))
+      ctx.send(JMessage.streamComplete(msgId.incrementAndGet, suid))
       ctx.channel.store.remove(suid)
     }
   }
