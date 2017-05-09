@@ -39,8 +39,8 @@ export class JFluxClient {
   private subscriptions: { [sui: string]: Subscriber<any> } = {}
 
   constructor(private url: string, private token: string) {
-    this.ws = new WsChannel(url, token, this.onMessage)
-    this.ws.onError = this.onError
+    this.ws = new WsChannel(url, token, _ => this.onMessage(_))
+    this.ws.onError = _ => this.onError(_)
     this.ws.connect()
 
     /*TODO: how to handle small/big disconnections ?

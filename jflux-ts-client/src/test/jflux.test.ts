@@ -2,16 +2,13 @@ import { JFlux } from "../main/jflux";
 import { expect } from "chai";
 
 describe("JFlux Test", () => {
-  it("test connection", () => {
+  it("test connection", (done) => {
     JFlux.url = 'ws://127.0.0.1:8080/ws'
     let client = JFlux.client('token123456')
-
-    /*let n = 0
-    let tst = new Test()
-    tst.testObservable().subscribe(
-      (data) => { n = data },
-      (error) => { console.log('Error: ', error) },
-      () => { expect(n).to.equal(5) }
-    )*/
+    client.publish('srv:com.github.shumy.jflux.srv.HelloService:pubHello', 'Micael')
+    client.request('srv:com.github.shumy.jflux.srv.HelloService:simpleHello', 'Micael').then(res => {
+      expect(res).to.equal('simpleHello Micael')
+      done()
+    })
   })
 })

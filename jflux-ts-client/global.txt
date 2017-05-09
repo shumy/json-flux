@@ -1,10 +1,9 @@
 [dependencies]
 npm install -g typescript
-npm install -g mocha
 npm install
 
 [compile]
 tsc
 
 [test]
-npm run test
+karma start
