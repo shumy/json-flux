@@ -89,5 +89,15 @@ class JMessage {
     new JMessage(id, Command.REPLY, null, suid, null, null, data)
   }
   
+  // (SIGNAL, OPEN)
+  static def signalOpen() {
+    new JMessage(0L, Command.SIGNAL, Flag.OPEN, null, null, null, null)
+  }
+  
+  // (SIGNAL, CLOSE)
+  static def signalClose() {
+    new JMessage(0L, Command.SIGNAL, Flag.CLOSE, null, null, null, null)
+  }
+  
   override toString() '''{id:«id», cmd:«cmd», flag:«flag», suid:«suid», path:«path», error:«error», data:«data»}'''
 }

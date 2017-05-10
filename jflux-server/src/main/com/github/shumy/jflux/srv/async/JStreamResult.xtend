@@ -16,8 +16,8 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 class JStreamResult implements IStreamResult<Object>, ICancel {
   public val String suid = 'str:' + UUID.randomUUID.toString
   
-  val msgId = new AtomicLong(0L)
   val mapper = new ObjectMapper
+  val msgId = new AtomicLong(0L)
   val PContext<JMessage> ctx
   
   val onCancel = new AtomicReference<()=>void>

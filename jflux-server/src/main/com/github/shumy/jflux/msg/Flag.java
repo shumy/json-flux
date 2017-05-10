@@ -6,5 +6,9 @@ public enum Flag {
     @JsonProperty("sub") SUBSCRIBE,
     @JsonProperty("cpl") COMPLETE,
     @JsonProperty("cnl") CANCEL,
-    @JsonProperty("err") ERROR;
+    @JsonProperty("err") ERROR,
+    
+    //SIGNAL flags...
+    @JsonProperty("open") OPEN,
+    @JsonProperty("close") CLOSE;
 }

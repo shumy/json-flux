@@ -26,15 +26,19 @@ class WsChannel<MSG> implements PChannel<MSG> {
   override getId() { return ch.id.asShortText }
   
   override send(MSG msg) {
-    val txt = srv.encoder.apply(msg)
-    logger.debug("Channel({}) -> SND-MSG: {}", id, txt)
-    
-    val frame = new TextWebSocketFrame(txt)
-    if (ch.eventLoop.inEventLoop)
-      ch.writeAndFlush(frame)
-    else ch.eventLoop.execute[
-      ch.writeAndFlush(frame)
-    ]
+    try {
+      val txt = srv.encoder.apply(msg)
+      logger.debug("Channel({}) -> SND-MSG: {}", id, txt)
+      
+      val frame = new TextWebSocketFrame(txt)
+      if (ch.eventLoop.inEventLoop)
+        ch.writeAndFlush(frame)
+      else ch.eventLoop.execute[
+        ch.writeAndFlush(frame)
+      ]
+    } catch(Throwable ex) {
+      pipe?.fail(ex)
+    }
   }
   
   override link(Pipeline<MSG> pipe) {
@@ -56,18 +60,23 @@ class WsChannel<MSG> implements PChannel<MSG> {
   }
   
   package def nextFrame(WebSocketFrame frame) {
-    if (frame instanceof TextWebSocketFrame) {
-      sb.append(frame.text)
-      
-      if (frame.finalFragment) {
-        val txt = sb.toString
-        sb.length = 0
-        logger.debug("Channel({}) -> RCV-MSG: {}", id, txt)
+    try {
+      if (frame instanceof TextWebSocketFrame) {
+        sb.append(frame.text)
         
-        val msg = srv.decoder.apply(txt)
-        pipe?.process(this, msg)
-      }
-    } else //BinaryWebSocketFrame
-      throw new UnsupportedOperationException('''Unsupported frame type: «frame.class.name»''')
+        if (frame.finalFragment) {
+          val txt = sb.toString
+          sb.length = 0
+          
+          
+            logger.debug("Channel({}) -> RCV-MSG: {}", id, txt)
+            val msg = srv.decoder.apply(txt)
+            pipe?.process(this, msg)
+        }
+      } else //BinaryWebSocketFrame
+        throw new UnsupportedOperationException('''Unsupported frame type: «frame.class.name»''')
+    } catch(Throwable ex) {
+      pipe?.fail(ex)
+    }
   }
 }

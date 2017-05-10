@@ -16,4 +16,8 @@ class Pipeline<MSG> {
   def handler((PContext<MSG>)=>void handler) {
     handlers.add(handler)
   }
+  
+  def void fail(Throwable ex) {
+    onFail?.apply(ex)
+  }
 }

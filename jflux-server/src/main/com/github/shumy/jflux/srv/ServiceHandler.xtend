@@ -34,15 +34,12 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
       return
     }
     
-    if (msg.cmd === Command.REPLY) {
-      send(JMessage.replyError(msg.id, new JError(400, 'Receiving a (reply) is not valid!')))
-      return
+    switch (msg.cmd) {
+      case Command.PUBLISH: processPublish
+      case Command.SEND: processSend
+      case Command.REPLY: send(JMessage.replyError(msg.id, new JError(400, 'Receiving a (reply) is not valid!')))
+      case Command.SIGNAL: next //forward to SignalHandler
     }
-    
-    if (msg.cmd === Command.PUBLISH)
-      processPublish
-    else
-      processSend
   }
   
   def void processPublish(PContext<JMessage> it) {
