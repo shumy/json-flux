@@ -4,7 +4,7 @@
   Flag    { SUBSCRIBE, COMPLETE, CANCEL, ERROR }
 
  notes:
-  1) [id] is always needed to detect lost messages, in case of WS connection resets ?
+  1) [id] is always needed on received publish cmd to detect lost messages, in case of WS connection resets.
   2) notation
      (>>)  exactly one message needed
      (<--) zero or more messages of this type
@@ -39,7 +39,7 @@
    |>> (PUBLISH, CANCEL)		      [ suid ]
 
 Protocol rules:
-  SEND messages always expect a REPLY, in last case a timeout.
+  SEND messages expect a REPLY, or a client timeout.
   REPLY with success doesn't need an OK flag, it's implicit.
   SUBSCRIBE messages don't have data.
 

@@ -78,6 +78,8 @@ class ServiceMethod {
   val Object srv
   val Method meth
   
+  def getName() {return meth.name }
+  
   def Object invoke(JMessage it) {
     //validate call type
     if (cmd == Command.PUBLISH && type != Type.PUBLISH)

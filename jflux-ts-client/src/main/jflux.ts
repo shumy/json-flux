@@ -114,7 +114,7 @@ export class JFluxClient {
 
       //TeardownLogic -> cancel and unregister subscription
       return () => {
-        if (SUID != null) {
+        if (SUID != null && this.subscriptions[SUID] != null) {
           this.ws.send({ "cmd": CMD.PUBLISH, "flag": FLAG.CANCEL, "suid": SUID })
           delete this.subscriptions[SUID]
         }
@@ -126,7 +126,10 @@ export class JFluxClient {
 
   private onMessage(msg: any): void {
     if (msg.id == null) {
-      this.onError({ "code": 500, "msg": 'Unexpected message with no (id)' })
+      if (msg.flag == FLAG.ERROR)
+        this.onError(msg.error)
+      else
+        this.onError({ "code": 500, "msg": 'Unexpected message with no (id)' })
       return
     }
 
