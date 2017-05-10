@@ -7,12 +7,12 @@ class PContext<MSG> {
   val Pipeline<MSG> pipe
   val Iterator<(PContext<MSG>)=>void> iter
   
-  @Accessors val IChannel<MSG> channel
+  @Accessors val PChannel<MSG> channel
   @Accessors val MSG msg
   
   boolean inFail = false
   
-  package new(Pipeline<MSG> pipe, Iterator<(PContext<MSG>)=>void> iter, IChannel<MSG> channel, MSG msg) {
+  package new(Pipeline<MSG> pipe, Iterator<(PContext<MSG>)=>void> iter, PChannel<MSG> channel, MSG msg) {
     this.pipe = pipe
     this.iter = iter
     this.channel = channel

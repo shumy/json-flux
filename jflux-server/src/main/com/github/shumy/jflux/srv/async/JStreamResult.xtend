@@ -2,6 +2,7 @@ package com.github.shumy.jflux.srv.async
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.shumy.jflux.api.IStreamResult
+import com.github.shumy.jflux.api.ICancel
 import com.github.shumy.jflux.msg.JError
 import com.github.shumy.jflux.msg.JMessage
 import com.github.shumy.jflux.pipeline.PContext
@@ -12,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 
 @FinalFieldsConstructor
-class JStreamResult implements IStreamResult<Object> {
+class JStreamResult implements IStreamResult<Object>, ICancel {
   public val String suid = 'str:' + UUID.randomUUID.toString
   
   val msgId = new AtomicLong(0L)
@@ -22,7 +23,7 @@ class JStreamResult implements IStreamResult<Object> {
   val onCancel = new AtomicReference<()=>void>
   val isComplete = new AtomicBoolean(false)
   
-  def void cancel() {
+  override cancel() {
     if (!isComplete.get) {
       isComplete.set = true
       onCancel.get?.apply

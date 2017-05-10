@@ -34,7 +34,7 @@
    Cancel messages from the client or the server can close it.
    >>  (SEND, SUBSCRIBE)		      [ id, path ]
    <<  (REPLY, ERROR?)			      [ id, (suid & data | error) ]
-   <-- (PUBLISH, ERROR?) 			    [ id, suid, (data | error) ]
+   <-- (PUBLISH) 			            [ id, suid, data ]
    |<< (PUBLISH, CANCEL) 		      [ id, suid ]
    |>> (PUBLISH, CANCEL)		      [ suid ]
 

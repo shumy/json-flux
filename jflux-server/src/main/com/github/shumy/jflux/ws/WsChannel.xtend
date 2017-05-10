@@ -1,6 +1,6 @@
 package com.github.shumy.jflux.ws
 
-import com.github.shumy.jflux.pipeline.IChannel
+import com.github.shumy.jflux.pipeline.PChannel
 import com.github.shumy.jflux.pipeline.Pipeline
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame
@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.slf4j.LoggerFactory
 
-class WsChannel<MSG> implements IChannel<MSG> {
+class WsChannel<MSG> implements PChannel<MSG> {
   static val logger = LoggerFactory.getLogger(WsChannel)
   
   val WebSocketServer<MSG> srv

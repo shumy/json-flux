@@ -6,4 +6,5 @@ import java.lang.annotation.Target
 @Target(FIELD)
 @Retention(RUNTIME)
 annotation Channel {
+  Class<?> value
 }

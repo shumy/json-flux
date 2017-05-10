@@ -9,8 +9,10 @@ import com.github.shumy.jflux.msg.JError
 import com.github.shumy.jflux.msg.JMessage
 import com.github.shumy.jflux.pipeline.PContext
 import com.github.shumy.jflux.srv.ServiceMethod.Type
+import com.github.shumy.jflux.srv.async.JChannel
 import com.github.shumy.jflux.srv.async.JRequestResult
 import com.github.shumy.jflux.srv.async.JStreamResult
+import com.github.shumy.jflux.api.ICancel
 
 class ServiceHandler implements (PContext<JMessage>)=>void {
   val mapper = new ObjectMapper
@@ -26,8 +28,8 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
       return
     }
     
-    if (msg.cmd === Command.SEND && msg.id === null) {
-      send(JMessage.replyError(msg.id, new JError(400, 'No mandatory field (id) for (send)')))
+    if (msg.cmd === Command.SEND && (msg.id === null || msg.path === null)) {
+      send(JMessage.replyError(msg.id, new JError(400, 'No mandatory fields (id, path) for (send)')))
       return
     }
     
@@ -44,23 +46,32 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
   
   def void processPublish(PContext<JMessage> it) {
     if (msg.flag === null) {
-      val sm = serviceMethod
-      if (sm === null) return;
-      
-      if (sm.type === Type.PUBLISH) {
-        val ret = sm.invoke(msg)
-        if (ret instanceof JError)
-          send(JMessage.replyError(msg.id, ret))
-      } else
-        send(JMessage.replyError(msg.id, new JError(400, 'Invalid (fire-and-forget) method: ' + sm.name)))
+      if (msg.path.startsWith('ch:')) {
+        val sc = serviceChannel
+        if (sc === null) return;
+        
+        sc.channelPublish(msg.data)
+      } else {
+        val sm = serviceMethod
+        if (sm === null) return;
+        
+        if (sm.type === Type.PUBLISH) {
+          val ret = sm.invoke(msg)
+          if (ret instanceof JError)
+            send(JMessage.replyError(msg.id, ret))
+        } else
+          send(JMessage.replyError(msg.id, new JError(400, 'Invalid (fire-and-forget) method: ' + sm.name)))
+      }
     } else if (msg.flag === Flag.CANCEL) {
       if (msg.suid === null) {
         send(JMessage.replyError(msg.id, new JError(400, 'No mandatory fields (suid) for (cancel)')))
         return
       }
       
-      val stream = channel.store.remove(msg.suid) as JStreamResult
-      stream?.cancel
+      //unsubscribe stream/channel
+      //TODO: should this also be invoked on (SIGNAL, CANCEL) ??
+      val cancelable = channel.store.remove(msg.suid) as ICancel
+      cancelable?.cancel
     } else
       send(JMessage.replyError(msg.id, new JError(400, 'No flux available for (publish)!')))
   }
@@ -83,9 +94,7 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
       else
         send(JMessage.replyError(msg.id, new JError(400, 'Invalid (request/reply) or (request/stream) method: ' + sm.name)))
     } else if (msg.flag === Flag.SUBSCRIBE) {
-      //TODO: process (SEND, SUBCRIBE) for channels
-      println('Channel subscription not yet implemented!')
-      send(JMessage.replyError(msg.id, new JError(500, 'Channel subscription not yet implemented!')))
+      processSubcription
     } else
       send(JMessage.replyError(msg.id, new JError(400, 'No flux available for (send)!')))
   }
@@ -122,6 +131,32 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
         send(JMessage.publishError(msg.id, sr.suid, new JError(500, ex.message)))
       }
     ].start
+  }
+  
+  def void processSubcription(PContext<JMessage> it) {
+    val sc = serviceChannel
+    if (sc === null) return;
+    
+    val sub = sc.channelSubscribe(channel)
+    channel.store.put(sub.suid, sub)
+    send(JMessage.subscribeReply(msg.id, sub.suid, null))
+    //TODO: process any initial data ?
+  }
+  
+  def JChannel serviceChannel(PContext<JMessage> it) {
+    val sPath = msg.path.split(':')
+    if (sPath.length !== 3 || sPath.get(0) != 'ch') {
+      send(JMessage.replyError(msg.id, new JError(400, 'Channel path not valid: ' + msg.path)))
+      return null
+    }
+    
+    val sc = store.getChannel(sPath.get(1), sPath.get(2))
+    if (sc === null) {
+      send(JMessage.replyError(msg.id, new JError(404, 'Channel path not found: ' + msg.path)))
+      return null
+    }
+    
+    return sc
   }
   
   def ServiceMethod serviceMethod(PContext<JMessage> it) {

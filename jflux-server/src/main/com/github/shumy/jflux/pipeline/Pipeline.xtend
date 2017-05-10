@@ -8,7 +8,7 @@ class Pipeline<MSG> {
   
   @Accessors(PUBLIC_SETTER) package var (Throwable) => void onFail
   
-  def process(IChannel<MSG> channel, MSG msg) {
+  def process(PChannel<MSG> channel, MSG msg) {
     val ctx = new PContext<MSG>(this, handlers.iterator, channel, msg)
     ctx.next
   }

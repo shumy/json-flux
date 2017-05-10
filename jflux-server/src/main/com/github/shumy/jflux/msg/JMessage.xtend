@@ -85,7 +85,7 @@ class JMessage {
   }
   
   // (subscribe/channel)
-  static def channelReply(Long id, String suid, JsonNode data) {
+  static def subscribeReply(Long id, String suid, JsonNode data) {
     new JMessage(id, Command.REPLY, null, suid, null, null, data)
   }
   

@@ -2,15 +2,17 @@ package com.github.shumy.jflux.srv
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
+import com.github.shumy.jflux.api.Channel
+import com.github.shumy.jflux.api.IChannel
 import com.github.shumy.jflux.api.IRequest
 import com.github.shumy.jflux.api.IStream
 import com.github.shumy.jflux.api.Publish
 import com.github.shumy.jflux.api.Request
 import com.github.shumy.jflux.api.Service
 import com.github.shumy.jflux.api.Stream
-import com.github.shumy.jflux.msg.Command
 import com.github.shumy.jflux.msg.JError
 import com.github.shumy.jflux.msg.JMessage
+import com.github.shumy.jflux.srv.async.JChannel
 import java.lang.reflect.Method
 import java.util.Map
 import java.util.concurrent.ConcurrentHashMap
@@ -22,7 +24,7 @@ class ServiceStore {
   static val logger = LoggerFactory.getLogger(ServiceStore)
   
   val ObjectMapper mapper
-  val paths = new ConcurrentHashMap<String, Map<String, ServiceMethod>>
+  val paths = new ConcurrentHashMap<String, Map<String, Object>> //Object of types: ServiceMethod or JChannel
   
   def void addService(Object srv) {
     val srvName = srv.class.name
@@ -32,7 +34,7 @@ class ServiceStore {
     logger.info("ADD-SRV: {}", srvName)
     var srvMap = paths.get(srvName)
     if (srvMap === null) {
-      srvMap = new ConcurrentHashMap<String, ServiceMethod>
+      srvMap = new ConcurrentHashMap<String, Object>
       paths.put(srvName, srvMap)
     }
     
@@ -61,11 +63,32 @@ class ServiceStore {
         logger.info("ADD-METH-STREAM: {}", meth.name)
       }
     }
+    
+    for (field: srv.class.declaredFields) {
+      val fAnno = field.getAnnotation(Channel)
+      if (fAnno !== null) {
+        if (field.type != IChannel)
+          throw new RuntimeException('''Channel field («field.type.name») should be of type IChannel''')
+        
+        val ch = new JChannel(fAnno.value)
+        srvMap.put(field.name, ch)
+        
+        field.accessible = true
+        field.set(srv, ch)
+        
+        logger.info("ADD-CHANNEL: {}", field.name)
+      }
+    }
   }
   
   def ServiceMethod getMethod(String srvName, String methName) {
     val srvMap = paths.get(srvName)
-    return srvMap?.get(methName)
+    return srvMap?.get(methName) as ServiceMethod
+  }
+  
+  def JChannel getChannel(String srvName, String methName) {
+    val srvMap = paths.get(srvName)
+    return srvMap?.get(methName) as JChannel
   }
 }
 
@@ -81,13 +104,6 @@ class ServiceMethod {
   def getName() {return meth.name }
   
   def Object invoke(JMessage it) {
-    //validate call type
-    if (cmd == Command.PUBLISH && type != Type.PUBLISH)
-      return new JError(400, 'Invalid (PUBLISH) call to path: ' + path)
-    
-    if (cmd == Command.SEND && type == Type.PUBLISH)
-      return new JError(400, 'Invalid (SEND) call to path: ' + path)
-    
     //BEGIN: parameter conversion
     val argTypes = meth.parameterTypes
     val args = newArrayOfSize(meth.parameterCount)

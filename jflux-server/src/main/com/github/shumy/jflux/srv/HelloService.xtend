@@ -1,6 +1,7 @@
 package com.github.shumy.jflux.srv
 
 import com.github.shumy.jflux.api.Channel
+import com.github.shumy.jflux.api.IChannel
 import com.github.shumy.jflux.api.IRequest
 import com.github.shumy.jflux.api.IStream
 import com.github.shumy.jflux.api.Publish
@@ -11,12 +12,12 @@ import java.util.List
 
 @Service
 class HelloService {
-  //@Channel val channel = new JChannel<String>
+  @Channel(String) IChannel<String> chHello
   
   @Publish
   def void pubHello(String name) {
     println('''pubHello «name»''')
-    //channel.publish('''pubHello «name»''')
+    chHello.publish('''pubHello «name»''')
   }
   
   @Request
