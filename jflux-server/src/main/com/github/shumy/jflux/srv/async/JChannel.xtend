@@ -17,15 +17,14 @@ class JChannel implements IChannel<Object> {
   package val clientSubs = new ConcurrentHashMap<String, JChannelSubscription>
   
   val mapper = new ObjectMapper
-  val msgId = new AtomicLong(0L)
   val Class<?> msgType
   
   override publish(Object data) {
-    localSubs.values.forEach[ publish(data) ]
+    localSubs.values.forEach[ ch | ch.publish(data) ]
     
     if (!clientSubs.empty) {
       val tree = mapper.valueToTree(data)
-      clientSubs.values.forEach[ channelPublish(tree) ]
+      clientSubs.values.forEach[ ch | ch.channelPublish(tree) ]
     }
   }
   
@@ -44,17 +43,17 @@ class JChannel implements IChannel<Object> {
   
   def void channelPublish(JsonNode tree) {
     //TODO: how to avoid publishing on the same PChannel ?
-    clientSubs.values.forEach[ channelPublish(tree) ]
+    clientSubs.values.forEach[ ch | ch.channelPublish(tree) ]
     
     if (!localSubs.empty) {
       val data = mapper.treeToValue(tree, msgType)
-      localSubs.values.forEach[ publish(data) ]
+      localSubs.values.forEach[ ch | ch.publish(data) ]
     }
   }
   
   def JChannelSubscription channelSubscribe(PChannel<JMessage> pCh) {
     val suid = 'ch:' + UUID.randomUUID.toString
-    val sub = new JChannelSubscription(this, suid, pCh, mapper, msgId)
+    val sub = new JChannelSubscription(this, suid, pCh, mapper)
     clientSubs.put(suid, sub)
     return sub
   }
@@ -62,12 +61,12 @@ class JChannel implements IChannel<Object> {
 
 @FinalFieldsConstructor
 class JChannelSubscription implements ISubscription<Object> {
+  val msgId = new AtomicLong(0L)
+  
   val JChannel ch
   val String suid
   val PChannel<JMessage> pCh
-  
   val ObjectMapper mapper
-  val AtomicLong msgId
   
   override suid() { suid }
   

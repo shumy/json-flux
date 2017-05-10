@@ -8,7 +8,7 @@ import com.github.shumy.jflux.api.ICancel
 class SignalHandler implements (PContext<JMessage>)=>void {
   override apply(PContext<JMessage> it) {
     if (msg.flag === Flag.CLOSE) {
-      println('SIGNAL-CLOSE')
+      println('SIGNAL-CLOSE: ' + channel.id)
       channel.store.forEach[ key, obj |
         if (obj instanceof ICancel) {
           println('SIGNAL-CANCEL: ' + key)
@@ -16,7 +16,7 @@ class SignalHandler implements (PContext<JMessage>)=>void {
         }
       ]
     } else if (msg.flag === Flag.OPEN) {
-      println('SIGNAL-OPEN')
+      println('SIGNAL-OPEN: ' + channel.id)
     } else
       throw new RuntimeException('''Signal not recognized: «msg.flag»''')
   }

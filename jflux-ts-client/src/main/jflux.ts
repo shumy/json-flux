@@ -88,7 +88,7 @@ export class JFluxClient {
     let ID = this.idCounter
 
     return new Observable<any>((sub) => {
-      var SUID: string = null
+      let SUID: string = null
       this.replyHandlers[ID] = (msg) => {
         if (msg.flag == FLAG.ERROR) {
           sub.error(msg.error)
@@ -122,7 +122,43 @@ export class JFluxClient {
     })
   }
   
-  //channel(path: string): Channel<any>
+  channel(path: string): Observable<any> {
+    this.idCounter++
+    let ID = this.idCounter
+
+    return new Observable<any>((sub) => {
+      let SUID: string = null
+      this.replyHandlers[ID] = (msg) => {
+        if (msg.flag == FLAG.ERROR) {
+          sub.error(msg.error)
+          return
+        }
+
+        if (msg.flag != null) {
+          sub.error({ "code": 500, "msg": 'Unexpected response for (subscribe/channel) with flag: ' + msg.flag })
+          return
+        }
+
+        if (msg.suid == null) {
+          sub.error({ "code": 500, "msg": 'Unexpected response for (subscribe/channel) with no (suid)' })
+          return
+        }
+        
+        SUID = msg.suid
+        this.subscriptions[SUID] = sub
+      }
+
+      this.ws.send({ "id": ID, "cmd": CMD.SEND, "flag": FLAG.SUBSCRIBE, "path": path })
+      setTimeout(_ => this.onReply({ "id": ID, "cmd": CMD.REPLY, "error": { "code": 408, "msg": '(request/stream) timeout!' } }), this.TIMEOUT)
+
+      return () => {
+        if (SUID != null && this.subscriptions[SUID] != null) {
+          this.ws.send({ "cmd": CMD.PUBLISH, "flag": FLAG.CANCEL, "suid": SUID })
+          delete this.subscriptions[SUID]
+        }
+      }
+    })
+  }
 
   private onMessage(msg: any): void {
     if (msg.id == null) {

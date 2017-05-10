@@ -6,9 +6,11 @@ describe("JFlux Test", () => {
     JFlux.url = 'ws://127.0.0.1:8080/ws'
     let client = JFlux.client('token123456')
     
-    client.publish('srv:com.github.shumy.jflux.srv.HelloService:pubHello', 'Micael')
-    client.publish('ch:com.github.shumy.jflux.srv.HelloService:chHello', 'Jorge')
-    
+    client.channel('ch:com.github.shumy.jflux.srv.HelloService:chHello')
+      .subscribe(data => {
+        console.log(data)
+      })
+
     client.request('srv:com.github.shumy.jflux.srv.HelloService:simpleHello', 'Micael')
       .then(res => {
         expect(res).to.equal('simpleHello Micael')
@@ -28,5 +30,8 @@ describe("JFlux Test", () => {
         sub.unsubscribe()
         done()
       })
+    
+    client.publish('srv:com.github.shumy.jflux.srv.HelloService:pubHello', 'Micael')
+    client.publish('ch:com.github.shumy.jflux.srv.HelloService:chHello', 'Jorge')
   })
 })
