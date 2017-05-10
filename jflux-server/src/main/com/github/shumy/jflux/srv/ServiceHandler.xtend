@@ -19,7 +19,8 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
   val store = new ServiceStore(mapper)
   
   def void addService(Object srv) {
-    store.addService(srv)
+    val initMeth = store.addService(srv)
+    initMeth?.invoke(srv)
   }
   
   override apply(PContext<JMessage> it) {

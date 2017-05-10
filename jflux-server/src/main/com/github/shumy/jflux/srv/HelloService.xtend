@@ -8,15 +8,22 @@ import com.github.shumy.jflux.api.Publish
 import com.github.shumy.jflux.api.Request
 import com.github.shumy.jflux.api.Service
 import com.github.shumy.jflux.api.Stream
+import com.github.shumy.jflux.api.Init
 import java.util.List
 
 @Service
 class HelloService {
   @Channel(String) IChannel<String> chHello
   
+  @Init
+  def void initializer() {
+    chHello.subscribe[
+      println('''chHello («it»)''')
+    ]
+  }
+  
   @Publish
   def void pubHello(String name) {
-    println('''pubHello «name»''')
     chHello.publish('''pubHello «name»''')
   }
   

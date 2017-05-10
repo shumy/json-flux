@@ -6,6 +6,7 @@ import com.github.shumy.jflux.api.Channel
 import com.github.shumy.jflux.api.IChannel
 import com.github.shumy.jflux.api.IRequest
 import com.github.shumy.jflux.api.IStream
+import com.github.shumy.jflux.api.Init
 import com.github.shumy.jflux.api.Publish
 import com.github.shumy.jflux.api.Request
 import com.github.shumy.jflux.api.Service
@@ -26,7 +27,9 @@ class ServiceStore {
   val ObjectMapper mapper
   val paths = new ConcurrentHashMap<String, Map<String, Object>> //Object of types: ServiceMethod or JChannel
   
-  def void addService(Object srv) {
+  def Method addService(Object srv) {
+    var Method initMeth = null
+    
     val srvName = srv.class.name
     if (srv.class.getAnnotation(Service) === null)
       throw new RuntimeException('''Class «srvName» is not a service!''')
@@ -62,6 +65,13 @@ class ServiceStore {
         srvMap.put(meth.name, new ServiceMethod(mapper, ServiceMethod.Type.STREAM, srv, meth))
         logger.info("ADD-METH-STREAM: {}", meth.name)
       }
+      
+      if (meth.getAnnotation(Init) !== null) {
+        if (meth.parameterCount !== 0)
+          throw new RuntimeException('''Init method («srvName»:«meth.name») should not have any parameters''')
+        
+        initMeth = meth
+      }
     }
     
     for (field: srv.class.declaredFields) {
@@ -79,6 +89,8 @@ class ServiceStore {
         logger.info("ADD-CHANNEL: {}", field.name)
       }
     }
+    
+    return initMeth
   }
   
   def ServiceMethod getMethod(String srvName, String methName) {

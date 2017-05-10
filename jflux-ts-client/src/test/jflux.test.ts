@@ -7,6 +7,7 @@ describe("JFlux Test", () => {
     let client = JFlux.client('token123456')
     
     client.publish('srv:com.github.shumy.jflux.srv.HelloService:pubHello', 'Micael')
+    client.publish('ch:com.github.shumy.jflux.srv.HelloService:chHello', 'Jorge')
     
     client.request('srv:com.github.shumy.jflux.srv.HelloService:simpleHello', 'Micael')
       .then(res => {
