@@ -44,6 +44,7 @@ dependencies {
   osgiRuntime 'org.apache.felix:org.apache.felix.configadmin:1.8.14'
   osgiRuntime 'org.apache.felix:org.apache.felix.scr:2.0.8', { transitive = false }
   
+  compile 'info.picocli:picocli:0.9.5'
   compile 'io.netty:netty-handler:4.1.9.Final'
   compile 'io.netty:netty-codec-http:4.1.9.Final'
 }

@@ -33,7 +33,6 @@ class JFluxStarter {
       onFail = [
         println('PIPELINE-ERROR:')
         printStackTrace
-        //TODO: send (SIGNAL, ERROR) ?
       ]
     ]
     

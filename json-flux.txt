@@ -39,7 +39,7 @@
    |>> (PUBLISH, CANCEL)		      [ suid ]
 
  (signals)
-   >> (SIGNAL, REJECTED)          [ id=0, error ]
+   << (SIGNAL, REJECTED)          [ id=0, error ]
 
 Protocol rules:
   SEND messages expect a REPLY, or a client timeout.
