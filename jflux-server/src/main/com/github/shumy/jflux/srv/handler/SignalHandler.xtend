@@ -1,4 +1,4 @@
-package com.github.shumy.jflux.srv
+package com.github.shumy.jflux.srv.handler
 
 import com.github.shumy.jflux.msg.JMessage
 import com.github.shumy.jflux.pipeline.PContext
@@ -16,7 +16,7 @@ class SignalHandler implements (PContext<JMessage>)=>void {
         }
       ]
     } else if (msg.flag === Flag.OPEN) {
-      println('SIGNAL-OPEN: ' + channel.id)
+      println('''SIGNAL-OPEN: «channel.id» -> «channel.initData»''')
     }
     
     //Signals traverse the pipeline. Maybe another handler need to process a CLOSE signal?

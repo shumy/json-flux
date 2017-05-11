@@ -3,8 +3,11 @@ package com.github.shumy.jflux.ws
 import com.github.shumy.jflux.pipeline.PChannel
 import com.github.shumy.jflux.pipeline.Pipeline
 import io.netty.channel.Channel
+import io.netty.handler.codec.http.QueryStringDecoder
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame
 import io.netty.handler.codec.http.websocketx.WebSocketFrame
+import java.util.Base64
+import java.util.Collections
 import java.util.Map
 import java.util.concurrent.ConcurrentHashMap
 import org.eclipse.xtend.lib.annotations.Accessors
@@ -16,12 +19,14 @@ class WsChannel<MSG> implements PChannel<MSG> {
   val WebSocketServer<MSG> srv
   val Channel ch
   
+  @Accessors val String uri
+  @Accessors val Map<String, String> initData
+  @Accessors val Map<String, Object> store = new ConcurrentHashMap<String, Object>
+  
   val sb = new StringBuffer
   
   var Pipeline<MSG> pipe
   @Accessors var () => void onClose
-  
-  @Accessors val Map<String, Object> store = new ConcurrentHashMap<String, Object>
   
   override getId() { return ch.id.asShortText }
   
@@ -53,9 +58,24 @@ class WsChannel<MSG> implements PChannel<MSG> {
     onClose?.apply
   }
   
-  package new(WebSocketServer<MSG> srv, Channel ch) {
+  package new(WebSocketServer<MSG> srv, Channel ch, String uri) {
     this.srv = srv
     this.ch = ch
+    this.uri = uri
+    
+    
+    val decoder = new QueryStringDecoder(uri)
+    val dataList = decoder.parameters.get('data')
+    val data = if (!dataList.empty) {
+      val base64Data = dataList.get(0)
+      val stringData = new String(Base64.decoder.decode(base64Data))
+      srv.initDataDecoder.apply(stringData)
+    } else {
+      Collections.EMPTY_MAP
+    }
+    
+    this.initData = Collections.unmodifiableMap(data)
+    
     logger.debug("Channel({}) -> OPEN", id)
   }
   

@@ -18,7 +18,7 @@ class WebSocketServerInitializer extends ChannelInitializer<SocketChannel> {
   val String wsPath
   val SslContext sslCtx
   
-  val (Channel) => void onOpen
+  val (Channel, String) => void onOpen
   val (String) => void onClose
   val (String, WebSocketFrame) => void onFrame
   val (Throwable) => void onError
@@ -32,7 +32,7 @@ class WebSocketServerInitializer extends ChannelInitializer<SocketChannel> {
         override userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
           super.userEventTriggered(ctx, evt)
           if (evt instanceof HandshakeComplete) {
-            onOpen.apply(ctx.channel)
+            onOpen.apply(ctx.channel, evt.requestUri)
           }
         }
         

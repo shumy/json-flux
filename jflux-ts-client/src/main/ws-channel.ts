@@ -3,14 +3,11 @@ export class WsChannel {
   readonly WAIT_TIME = 100
 
   private link: boolean = false
-  private url: string
   private websocket: WebSocket
 
   onError?: (error: any) => void
 
-  constructor(server: string, token: string, private onMessage: (msg: any) => void) {
-    this.url = server + '?token=' + token
-  }
+  constructor(private url: string, private onMessage: (msg: any) => void) {}
 
   connect() {
     this.link = true
@@ -22,6 +19,7 @@ export class WsChannel {
     if (this.websocket != null) {
       this.websocket.close()
       this.websocket = null
+      console.log('WS-DISCONNECT: ', this.url)
     }
   }
 
@@ -36,11 +34,11 @@ export class WsChannel {
     if (this.link == false)
       return
      
-    console.log('WS-TRY-OPEN: ', this.url)
+    console.log('WS-TRY-CONNECT: ', this.url)
     this.websocket = new WebSocket(this.url)
 
     this.websocket.onopen = (evt) => {
-      console.log('WS-OPEN: ', this.url)
+      console.log('WS-CONNECT: ', this.url)
     }
 
     this.websocket.onclose = () => {

@@ -1,6 +1,7 @@
-package com.github.shumy.jflux.srv
+package com.github.shumy.jflux.srv.handler
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.github.shumy.jflux.api.ICancel
 import com.github.shumy.jflux.api.IRequest
 import com.github.shumy.jflux.api.IStream
 import com.github.shumy.jflux.msg.Command
@@ -8,11 +9,12 @@ import com.github.shumy.jflux.msg.Flag
 import com.github.shumy.jflux.msg.JError
 import com.github.shumy.jflux.msg.JMessage
 import com.github.shumy.jflux.pipeline.PContext
+import com.github.shumy.jflux.srv.ServiceMethod
 import com.github.shumy.jflux.srv.ServiceMethod.Type
+import com.github.shumy.jflux.srv.ServiceStore
 import com.github.shumy.jflux.srv.async.JChannel
 import com.github.shumy.jflux.srv.async.JRequestResult
 import com.github.shumy.jflux.srv.async.JStreamResult
-import com.github.shumy.jflux.api.ICancel
 
 class ServiceHandler implements (PContext<JMessage>)=>void {
   val mapper = new ObjectMapper

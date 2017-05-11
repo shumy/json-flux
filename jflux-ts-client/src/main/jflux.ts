@@ -24,22 +24,24 @@ export class JFlux {
   static url: string
   static onError: (error: JError) => void
 
-  static client(token: string): JFluxClient {
-    return new JFluxClient(this.url, token)
+  static client(data: object): JFluxClient {
+    return new JFluxClient(this.url, data)
   }
 }
 
 export class JFluxClient {
   readonly TIMEOUT = 5000
 
-  private ws: WsChannel
+  private ws?: WsChannel
 
   private idCounter = 0
   private replyHandlers: { [key: number]: (msg: any)=>void } = {}
   private subscriptions: { [sui: string]: Subscriber<any> } = {}
 
-  constructor(private url: string, private token: string) {
-    this.ws = new WsChannel(url, token, _ => this.onMessage(_))
+  constructor(server: string, data: object) {
+    let dataB64 = btoa(JSON.stringify(data))
+
+    this.ws = new WsChannel(server + '?data=' + dataB64, _ => this.onMessage(_))
     this.ws.onError = _ => this.onError(_)
     this.ws.connect()
 
@@ -54,11 +56,21 @@ export class JFluxClient {
 
   // (fire-and-forget)
   publish(path: string, data?: any): void {
+    if (this.ws == null) {
+      this.onError({ "code": 500, "msg": 'JFluxClient is closed'})
+      return
+    }
+
     this.ws.send({ "cmd": CMD.PUBLISH, "path": path, "data": data })
   }
 
   // (request/reply)
   request(path: string, data?: any): Promise<any> {
+    if (this.ws == null) {
+      this.onError({ "code": 500, "msg": 'JFluxClient is closed'})
+      return
+    }
+
     this.idCounter++
     let ID = this.idCounter
 
@@ -84,6 +96,11 @@ export class JFluxClient {
 
   // (request/stream)
   stream(path: string, data?: any): Observable<any> {
+    if (this.ws == null) {
+      this.onError({ "code": 500, "msg": 'JFluxClient is closed'})
+      return
+    }
+
     this.idCounter++
     let ID = this.idCounter
 
@@ -124,6 +141,11 @@ export class JFluxClient {
   
   // (subscribe/channel)
   channel(path: string): Observable<any> {
+    if (this.ws == null) {
+      this.onError({ "code": 500, "msg": 'JFluxClient is closed'})
+      return
+    }
+
     this.idCounter++
     let ID = this.idCounter
 
@@ -159,6 +181,13 @@ export class JFluxClient {
         }
       }
     })
+  }
+
+  close() {
+    if (this.ws != null) {
+      this.ws.disconnect()
+      this.ws = null
+    }
   }
 
   private onMessage(msg: any): void {

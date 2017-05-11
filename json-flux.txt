@@ -61,9 +61,7 @@ Client Typescript API
     publish(path: string, data?: JSON): void
     request(path: string, data?: JSON): Promise<JSON>
     stream(path: string, data?: JSON): Observable<JSON>
-    channel(path: string): Channel<JSON>
-
-  Channel
+    channel(path: string): Observable<JSON>
 
   Error {
     code: number

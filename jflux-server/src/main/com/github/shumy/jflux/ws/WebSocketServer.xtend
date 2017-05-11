@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import org.slf4j.LoggerFactory
+import java.util.Map
 
 @FinalFieldsConstructor
 class WebSocketServer<MSG> {
@@ -20,8 +21,11 @@ class WebSocketServer<MSG> {
   package val boolean ssl
   package val int port
   package val String path
+  
+  package val (String) => Map<String, String> initDataDecoder
   package val (String) => MSG decoder
   package val (MSG) => String encoder
+  
   val (WsChannel<MSG>) => void onOpen
   
   val ch = new AtomicReference<Channel>
@@ -43,9 +47,9 @@ class WebSocketServer<MSG> {
           group(bossGroup, workerGroup)
           channel(NioServerSocketChannel)
           //handler(new LoggingHandler(LogLevel.DEBUG))
-          childHandler(new WebSocketServerInitializer(path, sslCtx, [
+          childHandler(new WebSocketServerInitializer(path, sslCtx, [ ch, uri |
             //on channel open
-            val wsch = new WsChannel<MSG>(this, it)
+            val wsch = new WsChannel<MSG>(this, ch, uri)
             channels.put(wsch.id, wsch)
             onOpen.apply(wsch)
           ], [
