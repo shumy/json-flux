@@ -1,5 +1,6 @@
 package com.github.shumy.jflux.ws
 
+import com.github.shumy.jflux.pipeline.Pipeline
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
 import io.netty.channel.EventLoopGroup
@@ -8,11 +9,11 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslContextBuilder
 import io.netty.handler.ssl.util.SelfSignedCertificate
+import java.util.Map
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import org.slf4j.LoggerFactory
-import java.util.Map
 
 @FinalFieldsConstructor
 class WebSocketServer<MSG> {
@@ -21,6 +22,7 @@ class WebSocketServer<MSG> {
   package val boolean ssl
   package val int port
   package val String path
+  package val Pipeline<MSG> pipe
   
   package val (String) => Map<String, String> initDataDecoder
   package val (String) => MSG decoder
@@ -52,10 +54,11 @@ class WebSocketServer<MSG> {
             val wsch = new WsChannel<MSG>(this, ch, uri)
             channels.put(wsch.id, wsch)
             onOpen.apply(wsch)
+            wsch.confirmOpen
           ], [
             //on channel close
             val wsch = channels.get(it)
-            wsch.close
+            wsch?.close
           ], [ id, frame |
             //on channel frame
             val wsch = channels.get(id)

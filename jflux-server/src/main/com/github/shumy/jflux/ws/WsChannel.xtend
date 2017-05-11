@@ -1,7 +1,6 @@
 package com.github.shumy.jflux.ws
 
 import com.github.shumy.jflux.pipeline.PChannel
-import com.github.shumy.jflux.pipeline.Pipeline
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.QueryStringDecoder
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame
@@ -10,27 +9,36 @@ import java.util.Base64
 import java.util.Collections
 import java.util.Map
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.slf4j.LoggerFactory
 
 class WsChannel<MSG> implements PChannel<MSG> {
   static val logger = LoggerFactory.getLogger(WsChannel)
   
+  enum State { TRY, READY, CLOSED }
+  
   val WebSocketServer<MSG> srv
   val Channel ch
+  
+  val state = new AtomicReference<State>(State.TRY)
+  val sb = new StringBuffer
   
   @Accessors val String uri
   @Accessors val Map<String, String> initData
   @Accessors val Map<String, Object> store = new ConcurrentHashMap<String, Object>
   
-  val sb = new StringBuffer
-  
-  var Pipeline<MSG> pipe
   @Accessors var () => void onClose
   
   override getId() { return ch.id.asShortText }
   
   override send(MSG msg) {
+    if (state.get === State.CLOSED) {
+      //Channel can send messages when in TRY state, to be able to send signals.
+      srv.pipe.fail(new RuntimeException('Try to send MSG. Channel in CLOSED!'))
+      return
+    }
+    
     try {
       val txt = srv.encoder.apply(msg)
       logger.debug("Channel({}) -> SND-MSG: {}", id, txt)
@@ -42,18 +50,15 @@ class WsChannel<MSG> implements PChannel<MSG> {
         ch.writeAndFlush(frame)
       ]
     } catch(Throwable ex) {
-      pipe?.fail(ex)
+      srv.pipe.fail(ex)
     }
-  }
-  
-  override link(Pipeline<MSG> pipe) {
-    this.pipe = pipe
   }
   
   override close() {
     logger.debug("Channel({}) -> CLOSE", id)
     if (ch.open) ch.close
     
+    state.set(State.CLOSED)
     srv.channels.remove(id)
     onClose?.apply
   }
@@ -79,7 +84,17 @@ class WsChannel<MSG> implements PChannel<MSG> {
     logger.debug("Channel({}) -> OPEN", id)
   }
   
+  package def void confirmOpen() {
+    if (state.get !== State.CLOSED)
+      state.set(State.READY)
+  }
+  
   package def nextFrame(WebSocketFrame frame) {
+    if (state.get !== State.READY) {
+      srv.pipe.fail(new RuntimeException('Try to process Frame. Channel in not READY!'))
+      return
+    }
+    
     try {
       if (frame instanceof TextWebSocketFrame) {
         sb.append(frame.text)
@@ -91,12 +106,12 @@ class WsChannel<MSG> implements PChannel<MSG> {
           
             logger.debug("Channel({}) -> RCV-MSG: {}", id, txt)
             val msg = srv.decoder.apply(txt)
-            pipe?.process(this, msg)
+            srv.pipe.process(this, msg)
         }
       } else //BinaryWebSocketFrame
         throw new UnsupportedOperationException('''Unsupported frame type: «frame.class.name»''')
     } catch(Throwable ex) {
-      pipe?.fail(ex)
+      srv.pipe.fail(ex)
     }
   }
 }

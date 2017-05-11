@@ -99,5 +99,10 @@ class JMessage {
     new JMessage(0L, Command.SIGNAL, Flag.CLOSE, null, null, null, null)
   }
   
+  // (SIGNAL, REJECT)
+  static def signalRejected(JError reason) {
+    new JMessage(0L, Command.SIGNAL, Flag.REJECTED, null, null, reason, null)
+  }
+  
   override toString() '''{id:«id», cmd:«cmd», flag:«flag», suid:«suid», path:«path», error:«error», data:«data»}'''
 }

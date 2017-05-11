@@ -8,7 +8,6 @@ interface PChannel<MSG> {
   def Map<String, String> getInitData()
   
   def void send(MSG msg)
-  def void link(Pipeline<MSG> pipe)
   def void close()
   
   def Map<String, Object> getStore()

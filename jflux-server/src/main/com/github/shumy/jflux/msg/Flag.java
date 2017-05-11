@@ -10,5 +10,6 @@ public enum Flag {
     
     //SIGNAL flags...
     @JsonProperty("open") OPEN,
+    @JsonProperty("rejected") REJECTED,
     @JsonProperty("close") CLOSE;
 }

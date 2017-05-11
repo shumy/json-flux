@@ -7,5 +7,5 @@ public enum Command {
   @JsonProperty("rpl") REPLY,
   @JsonProperty("pub") PUBLISH,
   
-  @JsonProperty("signal") SIGNAL;
+  @JsonProperty("sig") SIGNAL;
 }

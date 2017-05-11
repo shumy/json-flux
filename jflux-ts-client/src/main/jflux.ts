@@ -6,6 +6,8 @@ class CMD {
   static readonly SEND      = 'snd'
   static readonly REPLY     = 'rpl'
   static readonly PUBLISH   = 'pub'
+
+  static readonly SIGNAL    = 'sig'
 }
 
 class FLAG {
@@ -13,6 +15,9 @@ class FLAG {
   static readonly COMPLETE  = 'cpl'
   static readonly CANCEL    = 'cnl'
   static readonly ERROR     = 'err'
+
+  //for signal messages...
+  static readonly REJECTED  = 'rejected'
 }
 
 export interface JError {
@@ -203,8 +208,11 @@ export class JFluxClient {
       this.onReply(msg)
     else if (msg.cmd == CMD.PUBLISH)
       this.onPublish(msg)
-    else
+    else if (msg.cmd == CMD.SIGNAL)
+      this.onSignal(msg)
+    else  
       this.onError({ "code": 500, "msg": 'Unexpected message with cmd: ' + msg.cmd })
+
   }
 
   private onReply(msg: any): void {
@@ -233,6 +241,13 @@ export class JFluxClient {
     } else if (msg.flag == FLAG.ERROR) {
       delete this.subscriptions[msg.suid]
       sub.error(msg.error)
+    }
+  }
+
+  private onSignal(msg: any) {
+    if (msg.flag == FLAG.REJECTED) {
+      this.ws.disconnect()
+      this.onError(msg.error)
     }
   }
 

@@ -5,6 +5,17 @@ describe("JFlux Test", () => {
   JFlux.url = 'ws://127.0.0.1:8080/ws'
   let srvName = 'Hello'
 
+  it("open-rejected", (done) => {
+    JFlux.onError = (error) => {
+      expect(error.code).to.equal(403)
+      expect(error.msg).to.equal('Rejected by test error!')
+      done()
+    }
+
+    let client = JFlux.client({test:'test-reject'})
+    client.publish('srv:' + srvName + ':pubHello', 'Micael-Hack')
+  })
+
   it("pub/sub", (done) => {
     let client = JFlux.client({test: 'test-(pub/sub)'})
 

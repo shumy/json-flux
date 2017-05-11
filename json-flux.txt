@@ -38,10 +38,14 @@
    |<< (PUBLISH, CANCEL) 		      [ id, suid ]
    |>> (PUBLISH, CANCEL)		      [ suid ]
 
+ (signals)
+   >> (SIGNAL, REJECTED)          [ id=0, error ]
+
 Protocol rules:
   SEND messages expect a REPLY, or a client timeout.
   REPLY with success doesn't need an OK flag, it's implicit.
   SUBSCRIBE messages don't have data.
+  Server messages always need an ID.
 
 Creation and destruction of channels is not part of the spec, however messages that signal these events are part of the meta-protocol.
 

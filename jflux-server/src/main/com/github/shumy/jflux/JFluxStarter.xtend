@@ -1,5 +1,6 @@
 package com.github.shumy.jflux
 
+import com.github.shumy.jflux.msg.JError
 import com.github.shumy.jflux.msg.JMessage
 import com.github.shumy.jflux.msg.JMessageConverter
 import com.github.shumy.jflux.pipeline.Pipeline
@@ -21,9 +22,14 @@ class JFluxStarter {
       addService('Hello', new HelloService)
     ]
     
+    val sigHandler = new SignalHandler[
+      if (get('test') == 'test-reject')
+        new JError(403, 'Rejected by test error!')
+    ]
+    
     val pipe = new Pipeline<JMessage> => [
       handler(srvHandler)
-      handler(new SignalHandler)
+      handler(sigHandler)
       onFail = [
         println('PIPELINE-ERROR:')
         printStackTrace
@@ -32,10 +38,9 @@ class JFluxStarter {
     ]
     
     val mc = new JMessageConverter
-    ws = new WebSocketServer<JMessage>(false, 8080, '/ws', mc.initDataDecoder, mc.msgDecoder, mc.msgEncoder)[ ch |
+    ws = new WebSocketServer<JMessage>(false, 8080, '/ws', pipe, mc.initDataDecoder, mc.msgDecoder, mc.msgEncoder)[ ch |
       pipe.process(ch, JMessage.signalOpen)
       ch.onClose = [ pipe.process(ch, JMessage.signalClose) ]
-      ch.link(pipe)
     ]
     
     ws.start
