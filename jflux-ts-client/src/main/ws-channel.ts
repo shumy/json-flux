@@ -65,7 +65,7 @@ export class WsChannel {
     if (this.websocket != null && this.websocket.readyState == 1) {
       callback()
     } else {
-      console.log('WS-WAIT')
+      //console.log('WS-WAIT')
       setTimeout(() => this.waitReady(callback), this.WAIT_TIME)
     }
   }

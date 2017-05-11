@@ -17,7 +17,8 @@ class HelloService {
   
   @Init
   def void initializer() {
-    chHello.onSubscribe[ publish('Init') ]
+    chHello.onSubscribe[ println('Init: ' + suid) publish('Init') ]
+    chHello.onCancel[ println('Close: ' + suid) ]
     chHello.subscribe[
       println('''chHello («it»)''')
     ]

@@ -122,6 +122,7 @@ export class JFluxClient {
     })
   }
   
+  // (subscribe/channel)
   channel(path: string): Observable<any> {
     this.idCounter++
     let ID = this.idCounter
