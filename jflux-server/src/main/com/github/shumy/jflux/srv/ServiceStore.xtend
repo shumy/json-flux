@@ -27,10 +27,9 @@ class ServiceStore {
   val ObjectMapper mapper
   val paths = new ConcurrentHashMap<String, Map<String, Object>> //Object of types: ServiceMethod or JChannel
   
-  def Method addService(Object srv) {
+  def Method addService(String srvName, Object srv) {
     var Method initMeth = null
     
-    val srvName = srv.class.name
     if (srv.class.getAnnotation(Service) === null)
       throw new RuntimeException('''Class «srvName» is not a service!''')
       

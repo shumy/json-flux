@@ -18,7 +18,7 @@ class JFluxStarter {
   @Activate
   def void start() {
     val srvHandler = new ServiceHandler => [
-      addService(new HelloService)
+      addService('Hello', new HelloService)
     ]
     
     val pipe = new Pipeline<JMessage> => [

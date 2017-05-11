@@ -17,7 +17,9 @@ class SignalHandler implements (PContext<JMessage>)=>void {
       ]
     } else if (msg.flag === Flag.OPEN) {
       println('SIGNAL-OPEN: ' + channel.id)
-    } else
-      throw new RuntimeException('''Signal not recognized: «msg.flag»''')
+    }
+    
+    //Signals traverse the pipeline. Maybe another handler need to process a CLOSE signal?
+    next
   }
 }

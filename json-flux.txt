@@ -33,7 +33,7 @@
    Differently from request/stream general errors don't close the subscription, only connection failures!
    Cancel messages from the client or the server can close it.
    >>  (SEND, SUBSCRIBE)		      [ id, path ]
-   <<  (REPLY, ERROR?)			      [ id, (suid & data | error) ]
+   <<  (REPLY, ERROR?)			      [ id, (suid | error) ]
    <-- (PUBLISH) 			            [ id, suid, data ]
    |<< (PUBLISH, CANCEL) 		      [ id, suid ]
    |>> (PUBLISH, CANCEL)		      [ suid ]

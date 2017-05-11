@@ -16,6 +16,9 @@ class JChannel implements IChannel<Object> {
   package val localSubs = new ConcurrentHashMap<String, JSubscription>
   package val clientSubs = new ConcurrentHashMap<String, JChannelSubscription>
   
+  package var (ISubscription<Object>)=>void onSubscribe = null
+  package var (ISubscription<Object>)=>void onCancel = null
+  
   val mapper = new ObjectMapper
   val Class<?> msgType
   
@@ -28,6 +31,14 @@ class JChannel implements IChannel<Object> {
     }
   }
   
+  override onSubscribe((ISubscription<Object>)=>void onSubscribe) {
+    this.onSubscribe = onSubscribe
+  }
+  
+  override onCancel((ISubscription<Object>)=>void onCancel) {
+    this.onCancel = onCancel
+  }
+  
   override get(String suid) {
     val sub = localSubs.get(suid)
     if (sub === null)
@@ -38,11 +49,12 @@ class JChannel implements IChannel<Object> {
     val suid = 'ch:' + UUID.randomUUID.toString
     val sub = new JSubscription(this, suid, onData)
     localSubs.put(suid, sub)
+    
+    onSubscribe?.apply(sub)
     return sub
   }
   
   def void channelPublish(JsonNode tree) {
-    //TODO: how to avoid publishing on the same PChannel ?
     clientSubs.values.forEach[ ch | ch.channelPublish(tree) ]
     
     if (!localSubs.empty) {
@@ -51,10 +63,13 @@ class JChannel implements IChannel<Object> {
     }
   }
   
-  def JChannelSubscription channelSubscribe(PChannel<JMessage> pCh) {
+  def JChannelSubscription channelSubscribe(Long msgId, PChannel<JMessage> pCh) {
     val suid = 'ch:' + UUID.randomUUID.toString
     val sub = new JChannelSubscription(this, suid, pCh, mapper)
     clientSubs.put(suid, sub)
+    
+    pCh.send(JMessage.subscribeReply(msgId, suid))
+    onSubscribe?.apply(sub)
     return sub
   }
 }
@@ -77,6 +92,7 @@ class JChannelSubscription implements ISubscription<Object> {
   
   override cancel() {
     ch.clientSubs.remove(suid)
+    ch.onCancel?.apply(this)
   }
   
   def void channelPublish(JsonNode data) {
@@ -98,5 +114,6 @@ class JSubscription implements ISubscription<Object> {
   
   override cancel() {
     ch.localSubs.remove(suid)
+    ch.onCancel?.apply(this)
   }
 }

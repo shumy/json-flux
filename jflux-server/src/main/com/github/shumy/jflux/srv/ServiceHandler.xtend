@@ -19,7 +19,13 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
   val store = new ServiceStore(mapper)
   
   def void addService(Object srv) {
-    val initMeth = store.addService(srv)
+    val srvName = srv.class.name
+    val initMeth = store.addService(srvName, srv)
+    initMeth?.invoke(srv)
+  }
+  
+  def void addService(String srvName, Object srv) {
+    val initMeth = store.addService(srvName, srv)
     initMeth?.invoke(srv)
   }
   
@@ -67,7 +73,6 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
       }
       
       //unsubscribe stream/channel
-      //TODO: should this also be invoked on (SIGNAL, CANCEL) ??
       val cancelable = channel.store.remove(msg.suid) as ICancel
       cancelable?.cancel
     } else
@@ -135,10 +140,8 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
     val sc = serviceChannel
     if (sc === null) return;
     
-    val sub = sc.channelSubscribe(channel)
+    val sub = sc.channelSubscribe(msg.id, channel)
     channel.store.put(sub.suid, sub)
-    send(JMessage.subscribeReply(msg.id, sub.suid, null))
-    //TODO: process any initial data ?
   }
   
   def JChannel serviceChannel(PContext<JMessage> it) {

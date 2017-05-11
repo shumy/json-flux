@@ -17,6 +17,7 @@ class HelloService {
   
   @Init
   def void initializer() {
+    chHello.onSubscribe[ publish('Init') ]
     chHello.subscribe[
       println('''chHello («it»)''')
     ]
