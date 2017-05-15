@@ -48,7 +48,11 @@ class ServiceStore {
   }
   
   def printServices() {
-    paths.keySet.forEach[ printService ]
+    var n = 0
+    for (srv: paths.keySet) {
+      n++
+      println('''«n»: «srv»''')
+    }
   }
   
   def Method addService(String srvName, Object srv) {
@@ -57,7 +61,7 @@ class ServiceStore {
     if (srv.class.getAnnotation(Service) === null)
       throw new RuntimeException('''Class «srvName» is not a service!''')
       
-    logger.info("ADD-SRV: {}", srvName)
+    logger.debug("ADD-SRV: {}", srvName)
     var srvMap = paths.get(srvName)
     if (srvMap === null) {
       srvMap = new ConcurrentHashMap<String, Object>
@@ -70,7 +74,7 @@ class ServiceStore {
           throw new RuntimeException('''Publish method («srvName»:«meth.name») should not have any return type''')
         
         srvMap.put(meth.name, new ServiceMethod(mapper, ServiceMethod.Type.PUBLISH, srv, meth))
-        logger.info("ADD-METH-PUBLISH: {}", meth.name)
+        logger.debug("ADD-METH-PUBLISH: {}", meth.name)
       }
       
       if (meth.getAnnotation(Request) !== null) {
@@ -78,7 +82,7 @@ class ServiceStore {
           throw new RuntimeException('''Request method («srvName»:«meth.name») invalid return type''')
         
         srvMap.put(meth.name, new ServiceMethod(mapper, ServiceMethod.Type.REQUEST, srv, meth))
-        logger.info("ADD-METH-REQUEST: {}", meth.name)
+        logger.debug("ADD-METH-REQUEST: {}", meth.name)
       }
       
       if (meth.getAnnotation(Stream) !== null) {
@@ -86,7 +90,7 @@ class ServiceStore {
           throw new RuntimeException('''Stream method («srvName»:«meth.name») should return IStream<D>''')
           
         srvMap.put(meth.name, new ServiceMethod(mapper, ServiceMethod.Type.STREAM, srv, meth))
-        logger.info("ADD-METH-STREAM: {}", meth.name)
+        logger.debug("ADD-METH-STREAM: {}", meth.name)
       }
       
       if (meth.getAnnotation(Init) !== null) {
@@ -109,7 +113,7 @@ class ServiceStore {
         field.accessible = true
         field.set(srv, ch)
         
-        logger.info("ADD-CHANNEL: {}", field.name)
+        logger.debug("ADD-CHANNEL: {}", field.name)
       }
     }
     
