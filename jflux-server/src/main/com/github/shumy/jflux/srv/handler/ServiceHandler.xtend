@@ -15,10 +15,12 @@ import com.github.shumy.jflux.srv.ServiceStore
 import com.github.shumy.jflux.srv.async.JChannel
 import com.github.shumy.jflux.srv.async.JRequestResult
 import com.github.shumy.jflux.srv.async.JStreamResult
+import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 
+@FinalFieldsConstructor
 class ServiceHandler implements (PContext<JMessage>)=>void {
   val mapper = new ObjectMapper
-  val store = new ServiceStore(mapper)
+  val ServiceStore store
   
   def void addService(Object srv) {
     val srvName = srv.class.name

@@ -20,7 +20,7 @@ class JChannel implements IChannel<Object> {
   package var (ISubscription<Object>)=>void onCancel = null
   
   val mapper = new ObjectMapper
-  val Class<?> msgType
+  public val Class<?> msgType
   
   override publish(Object data) {
     localSubs.values.forEach[ ch | ch.publish(data) ]

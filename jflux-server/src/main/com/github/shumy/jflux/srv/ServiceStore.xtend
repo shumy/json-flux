@@ -20,12 +20,36 @@ import java.util.concurrent.ConcurrentHashMap
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import org.slf4j.LoggerFactory
 
-@FinalFieldsConstructor
 class ServiceStore {
   static val logger = LoggerFactory.getLogger(ServiceStore)
   
-  val ObjectMapper mapper
+  public static val INSTANCE = new ServiceStore
+  
+  val mapper = new ObjectMapper
   val paths = new ConcurrentHashMap<String, Map<String, Object>> //Object of types: ServiceMethod or JChannel
+  
+  def printService(String name) {
+    val srv = paths.get(name)
+    if (srv !== null) {
+      println(name)
+      
+      println('''  Channels:''')
+      srv.forEach[key, value |
+        if (value instanceof JChannel)
+          println('''    «key» -> (msgType: «value.msgType.simpleName»)''')
+      ]
+      
+      println('''  Methods:''')
+      srv.forEach[key, value |
+        if (value instanceof ServiceMethod)
+          println('''    «key» -> (type: «value.type.toString.toLowerCase», params: [«FOR t: value.meth.parameterTypes SEPARATOR ','»«t.simpleName»«ENDFOR»], return: «value.meth.returnType.simpleName»)''')
+      ]
+    }
+  }
+  
+  def printServices() {
+    paths.keySet.forEach[ printService ]
+  }
   
   def Method addService(String srvName, Object srv) {
     var Method initMeth = null
@@ -110,7 +134,7 @@ class ServiceMethod {
   val ObjectMapper mapper
   public val Type type
   val Object srv
-  val Method meth
+  package val Method meth
   
   def getName() {return meth.name }
   
