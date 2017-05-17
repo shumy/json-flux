@@ -36,5 +36,5 @@ bundle {
 
 task deployBundle(type: Copy) {
   from jar
-  into '../jflux-server/runtime/bundle'
+  into '../jflux-osgi-runtime/runtime/bundle'
 }
