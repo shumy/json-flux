@@ -1,7 +1,10 @@
 package com.github.shumy.jflux
 
-import com.github.shumy.jflux.srv.ServiceStore
+import com.github.shumy.jflux.api.IChannel
+import com.github.shumy.jflux.api.store.IMethod
+import com.github.shumy.jflux.api.store.IServiceStore
 import org.osgi.service.component.annotations.Component
+import org.osgi.service.component.annotations.Reference
 import picocli.CommandLine
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
@@ -13,6 +16,8 @@ import picocli.CommandLine.Option
 ])
 class JFluxCommand {
   
+  @Reference IServiceStore store
+  
   def void srv(String ...args) throws Exception {
     val cmd = CommandLine.parse(new Service, args)
     
@@ -21,12 +26,32 @@ class JFluxCommand {
       return
     }
     
-    if (cmd.srv !== null) { 
-      ServiceStore.INSTANCE.printService(cmd.srv)
+    if (cmd.srv !== null) {
+      val paths = store.getPaths(cmd.srv)
+      if (!paths.empty) {
+        println(cmd.srv)
+      
+        println('''  Channels:''')
+        paths.forEach[key, value |
+          if (value instanceof IChannel<?>)
+            println('''    «key» -> (msgType: «value.msgType.simpleName»)''')
+        ]
+      
+        println('''  Methods:''')
+        paths.forEach[key, value |
+          if (value instanceof IMethod)
+            println('''    «key» -> (type: «value.type.toString.toLowerCase», params: [«FOR ptn: value.parameterTypesName SEPARATOR ','»«ptn»«ENDFOR»], return: «value.returnTypeName»)''')
+        ]
+      }
+      
       return
     }
     
-    ServiceStore.INSTANCE.printServices
+    var n = 0
+    for (srv: store.services) {
+      n++
+      println('''«n»: «srv»''')
+    }
   }
 }
 

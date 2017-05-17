@@ -11,51 +11,41 @@ import com.github.shumy.jflux.api.Publish
 import com.github.shumy.jflux.api.Request
 import com.github.shumy.jflux.api.Service
 import com.github.shumy.jflux.api.Stream
+import com.github.shumy.jflux.api.store.IMethod
+import com.github.shumy.jflux.api.store.IServiceStore
 import com.github.shumy.jflux.msg.JError
 import com.github.shumy.jflux.msg.JMessage
 import com.github.shumy.jflux.srv.async.JChannel
 import java.lang.reflect.Method
+import java.util.Collections
 import java.util.Map
 import java.util.concurrent.ConcurrentHashMap
+import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
+import org.osgi.service.component.annotations.Component
 import org.slf4j.LoggerFactory
 
-class ServiceStore {
+@Component
+class ServiceStore implements IServiceStore {
   static val logger = LoggerFactory.getLogger(ServiceStore)
-  
-  public static val INSTANCE = new ServiceStore
   
   val mapper = new ObjectMapper
   val paths = new ConcurrentHashMap<String, Map<String, Object>> //Object of types: ServiceMethod or JChannel
   
-  def printService(String name) {
-    val srv = paths.get(name)
-    if (srv !== null) {
-      println(name)
-      
-      println('''  Channels:''')
-      srv.forEach[key, value |
-        if (value instanceof JChannel)
-          println('''    «key» -> (msgType: «value.msgType.simpleName»)''')
-      ]
-      
-      println('''  Methods:''')
-      srv.forEach[key, value |
-        if (value instanceof ServiceMethod)
-          println('''    «key» -> (type: «value.type.toString.toLowerCase», params: [«FOR t: value.meth.parameterTypes SEPARATOR ','»«t.simpleName»«ENDFOR»], return: «value.meth.returnType.simpleName»)''')
-      ]
-    }
+  override getServices() {
+    Collections.unmodifiableList(paths.keySet.toList)
   }
   
-  def printServices() {
-    var n = 0
-    for (srv: paths.keySet) {
-      n++
-      println('''«n»: «srv»''')
-    }
+  override getPaths(String srv) {
+    Collections.unmodifiableMap(paths.get(srv)?: Collections.EMPTY_MAP)
   }
   
-  def Method addService(String srvName, Object srv) {
+  override addService(Object srv) {
+    val srvName = srv.class.name
+    addService(srvName, srv)
+  }
+  
+  override addService(String srvName, Object srv) {
     var Method initMeth = null
     
     if (srv.class.getAnnotation(Service) === null)
@@ -73,7 +63,7 @@ class ServiceStore {
         if (meth.returnType != void)
           throw new RuntimeException('''Publish method («srvName»:«meth.name») should not have any return type''')
         
-        srvMap.put(meth.name, new ServiceMethod(mapper, ServiceMethod.Type.PUBLISH, srv, meth))
+        srvMap.put(meth.name, new ServiceMethod(mapper, IMethod.Type.PUBLISH, srv, meth))
         logger.debug("ADD-METH-PUBLISH: {}", meth.name)
       }
       
@@ -81,7 +71,7 @@ class ServiceStore {
         if (meth.returnType != IRequest && !mapper.canSerialize(meth.returnType))
           throw new RuntimeException('''Request method («srvName»:«meth.name») invalid return type''')
         
-        srvMap.put(meth.name, new ServiceMethod(mapper, ServiceMethod.Type.REQUEST, srv, meth))
+        srvMap.put(meth.name, new ServiceMethod(mapper, IMethod.Type.REQUEST, srv, meth))
         logger.debug("ADD-METH-REQUEST: {}", meth.name)
       }
       
@@ -89,7 +79,7 @@ class ServiceStore {
         if (meth.returnType != IStream)
           throw new RuntimeException('''Stream method («srvName»:«meth.name») should return IStream<D>''')
           
-        srvMap.put(meth.name, new ServiceMethod(mapper, ServiceMethod.Type.STREAM, srv, meth))
+        srvMap.put(meth.name, new ServiceMethod(mapper, IMethod.Type.STREAM, srv, meth))
         logger.debug("ADD-METH-STREAM: {}", meth.name)
       }
       
@@ -117,30 +107,37 @@ class ServiceStore {
       }
     }
     
-    return initMeth
+    initMeth?.invoke(srv)
   }
   
-  def ServiceMethod getMethod(String srvName, String methName) {
+  override removeService(String srvName) {
+    paths.remove(srvName)
+  }
+  
+  override getMethod(String srvName, String methName) {
     val srvMap = paths.get(srvName)
     return srvMap?.get(methName) as ServiceMethod
   }
   
-  def JChannel getChannel(String srvName, String methName) {
+  override getChannel(String srvName, String methName) {
     val srvMap = paths.get(srvName)
     return srvMap?.get(methName) as JChannel
   }
 }
 
 @FinalFieldsConstructor
-class ServiceMethod {
-  enum Type { PUBLISH, REQUEST, STREAM }
-  
+class ServiceMethod implements IMethod {
   val ObjectMapper mapper
-  public val Type type
+  @Accessors val Type type
   val Object srv
-  package val Method meth
+  val Method meth
   
-  def getName() {return meth.name }
+  override getName() {return meth.name }
+  override getReturnTypeName() { meth.returnType.simpleName }
+  
+  override getParameterTypesName() {
+    meth.parameterTypes.map[ simpleName ]
+  }
   
   def Object invoke(JMessage it) {
     //BEGIN: parameter conversion

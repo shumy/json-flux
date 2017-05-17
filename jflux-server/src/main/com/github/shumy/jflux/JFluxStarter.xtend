@@ -1,27 +1,32 @@
 package com.github.shumy.jflux
 
+import com.github.shumy.jflux.api.store.IServiceStore
 import com.github.shumy.jflux.msg.JError
 import com.github.shumy.jflux.msg.JMessage
 import com.github.shumy.jflux.msg.JMessageConverter
 import com.github.shumy.jflux.pipeline.Pipeline
 import com.github.shumy.jflux.srv.HelloService
-import com.github.shumy.jflux.srv.ServiceStore
 import com.github.shumy.jflux.srv.handler.ServiceHandler
 import com.github.shumy.jflux.srv.handler.SignalHandler
 import com.github.shumy.jflux.ws.WebSocketServer
 import org.osgi.service.component.annotations.Activate
 import org.osgi.service.component.annotations.Component
 import org.osgi.service.component.annotations.Deactivate
+import org.osgi.service.component.annotations.Reference
 
 @Component
 class JFluxStarter {
   var WebSocketServer<JMessage> ws
   
+  @Reference IServiceStore store
+  
   @Activate
   def void start() {
-    val srvHandler = new ServiceHandler(ServiceStore.INSTANCE) => [
+    store => [
       addService('Hello', new HelloService)
     ]
+    
+    val srvHandler = new ServiceHandler(store)
     
     val sigHandler = new SignalHandler[
       if (get('test') == 'test-reject')

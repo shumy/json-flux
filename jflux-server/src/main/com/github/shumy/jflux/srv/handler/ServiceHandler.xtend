@@ -11,27 +11,16 @@ import com.github.shumy.jflux.msg.JMessage
 import com.github.shumy.jflux.pipeline.PContext
 import com.github.shumy.jflux.srv.ServiceMethod
 import com.github.shumy.jflux.srv.ServiceMethod.Type
-import com.github.shumy.jflux.srv.ServiceStore
 import com.github.shumy.jflux.srv.async.JChannel
 import com.github.shumy.jflux.srv.async.JRequestResult
 import com.github.shumy.jflux.srv.async.JStreamResult
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
+import com.github.shumy.jflux.api.store.IServiceStore
 
 @FinalFieldsConstructor
 class ServiceHandler implements (PContext<JMessage>)=>void {
   val mapper = new ObjectMapper
-  val ServiceStore store
-  
-  def void addService(Object srv) {
-    val srvName = srv.class.name
-    val initMeth = store.addService(srvName, srv)
-    initMeth?.invoke(srv)
-  }
-  
-  def void addService(String srvName, Object srv) {
-    val initMeth = store.addService(srvName, srv)
-    initMeth?.invoke(srv)
-  }
+  val IServiceStore store
   
   override apply(PContext<JMessage> it) {
     if (msg.cmd === null) {
@@ -161,7 +150,7 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
       return null
     }
     
-    return sc
+    return sc as JChannel
   }
   
   def ServiceMethod serviceMethod(PContext<JMessage> it) {
@@ -177,6 +166,6 @@ class ServiceHandler implements (PContext<JMessage>)=>void {
       return null
     }
     
-    return sm
+    return sm as ServiceMethod
   }
 }

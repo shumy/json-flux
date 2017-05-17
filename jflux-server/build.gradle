@@ -51,6 +51,7 @@ dependencies {
 
 bundle {
   instruction '-dsannotations', '*'
+  instruction 'Export-Package', 'com.github.shumy.jflux.api.*'
 }
 
 runOsgi {

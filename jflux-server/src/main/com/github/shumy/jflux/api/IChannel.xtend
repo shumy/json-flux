@@ -1,6 +1,7 @@
 package com.github.shumy.jflux.api
 
 interface IChannel<D> {
+  def Class<?> getMsgType()
   def void publish(D data)
   
   def void onSubscribe((ISubscription<D>)=>void onSubscribe)

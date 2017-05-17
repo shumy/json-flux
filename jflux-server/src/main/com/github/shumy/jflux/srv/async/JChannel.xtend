@@ -10,6 +10,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
+import org.eclipse.xtend.lib.annotations.Accessors
 
 @FinalFieldsConstructor
 class JChannel implements IChannel<Object> {
@@ -20,7 +21,7 @@ class JChannel implements IChannel<Object> {
   package var (ISubscription<Object>)=>void onCancel = null
   
   val mapper = new ObjectMapper
-  public val Class<?> msgType
+  @Accessors val Class<?> msgType
   
   override publish(Object data) {
     localSubs.values.forEach[ ch | ch.publish(data) ]
