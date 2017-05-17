@@ -22,7 +22,7 @@ sourceSets {
 
 dependencies {
   //optional (if org.slf4j is needed, if using Xtend)
-  compile 'org.slf4j:slf4j-api:[1.7.1, 2.0)'
+  compile 'org.slf4j:slf4j-api:[0.0.0, 1.7.0)'
   compile 'org.eclipse.xtend:org.eclipse.xtend.lib:[2.11.0, 3.0)'
   
   //mandatory
