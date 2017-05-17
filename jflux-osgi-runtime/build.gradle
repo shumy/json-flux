@@ -2,15 +2,16 @@ plugins {
   id 'com.athaydes.osgi-run' version '1.5.4'  // https://github.com/renatoathaydes/osgi-run
 }
 
-defaultTasks 'createOsgiRuntime'
+defaultTasks 'build'
 repositories.mavenCentral()
 
 dependencies {
   systemLib 'org.ops4j.pax.logging:pax-logging-api:1.9.1'
+
   systemLib 'org.osgi:org.osgi.service.component.annotations:1.3.0'
   systemLib 'org.osgi:org.osgi.framework:1.8.0'
   
-  osgiRuntime 'org.apache.felix:org.apache.felix.configadmin:1.8.14'
+  systemLib 'org.apache.felix:org.apache.felix.configadmin:1.8.14'
   osgiRuntime 'org.apache.felix:org.apache.felix.scr:2.0.8', { transitive = false }
   
   osgiRuntime 'io.netty:netty-handler:4.1.9.Final'
@@ -27,4 +28,23 @@ dependencies {
 runOsgi {
   config += [ 'org.osgi.framework.system.packages.extra': 'sun.misc' ]
   outDir = '../runtime'
+}
+
+task copyConfig(type: Copy) {
+  from './runtime/original-config.properties'
+  into './runtime/conf'
+  rename { String fileName ->
+    fileName.replace('original-config.properties', 'config.properties')
+  }
+}
+
+task build(type: Delete) {
+  mkdir('./build')
+
+  dependsOn createOsgiRuntime
+  dependsOn copyConfig
+
+  delete './runtime/run.bat', './runtime/run.sh'
+  delete './runtime/felix-cache'
+  delete './build'
 }
