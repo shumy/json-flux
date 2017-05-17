@@ -5,7 +5,6 @@ import com.github.shumy.jflux.msg.JError
 import com.github.shumy.jflux.msg.JMessage
 import com.github.shumy.jflux.msg.JMessageConverter
 import com.github.shumy.jflux.pipeline.Pipeline
-import com.github.shumy.jflux.srv.HelloService
 import com.github.shumy.jflux.srv.handler.ServiceHandler
 import com.github.shumy.jflux.srv.handler.SignalHandler
 import com.github.shumy.jflux.ws.WebSocketServer
@@ -22,10 +21,6 @@ class JFluxStarter {
   
   @Activate
   def void start() {
-    store => [
-      addService('Hello', new HelloService)
-    ]
-    
     val srvHandler = new ServiceHandler(store)
     
     val sigHandler = new SignalHandler[

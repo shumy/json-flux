@@ -1,4 +1,4 @@
-package com.github.shumy.jflux.srv
+package com.github.shumy.jflux.test
 
 import com.github.shumy.jflux.api.Channel
 import com.github.shumy.jflux.api.IChannel

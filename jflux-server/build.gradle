@@ -1,5 +1,6 @@
 plugins {
   id 'java'
+  id 'maven-publish'
   id 'org.xtext.xtend' version '1.0.17'       // http://xtext.github.io/xtext-gradle-plugin/xtend.html
   id 'org.dm.bundle' version '0.10.0'         // https://github.com/TomDmitriev/gradle-bundle-plugin
   id 'com.athaydes.osgi-run' version '1.5.4'  // https://github.com/renatoathaydes/osgi-run
@@ -13,12 +14,6 @@ sourceCompatibility = 1.8
 defaultTasks 'createBundlesDir'
 repositories.mavenCentral()
 
-jar {
-  manifest {
-    attributes("Bundle-Name": "Json-Flux")
-  }
-}
-
 sourceSets {
   main {
     java.srcDirs= ['src/main']
@@ -27,6 +22,37 @@ sourceSets {
   test {
     java.srcDirs= ['src/test']
     xtendOutputDir = 'build/test/xtend-gen'
+  }
+}
+
+publishing {
+  publications {
+    maven(MavenPublication) {
+      from components.java
+      
+      pom.withXml {
+        def root = asNode()
+        root.appendNode('packaging', 'jar')
+        root.appendNode('name', 'Json-Flux - Main bundle to use in jflux services')
+        //root.appendNode('description', description)
+        root.appendNode('url', 'https://github.com/shumy/json-flux')
+        
+        def license = root.appendNode('licenses').appendNode('license')
+        license.appendNode('name', 'The Apache Software License, version 2.0')
+        license.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
+        license.appendNode('distribution', 'repo')
+        
+        def developer = root.appendNode('developers').appendNode('developer')
+        developer.appendNode('id', 'shumy')
+        developer.appendNode('name', 'Micael Pedrosa')
+        developer.appendNode('email', 'micaelpedrosa@gmail.com')
+        
+        def scm = root.appendNode('scm')
+        scm.appendNode('connection', 'scm:git:git@github.com:shumy/json-flux.git')
+        scm.appendNode('developerConnection', 'scm:git:git@github.com:shumy/json-flux.git')
+        scm.appendNode('url', 'git@github.com:shumy/json-flux.git')
+      }
+    }
   }
 }
 
@@ -51,6 +77,7 @@ dependencies {
 
 bundle {
   instruction '-dsannotations', '*'
+  instruction 'Bundle-Name', 'Json-Flux'
   instruction 'Export-Package', 'com.github.shumy.jflux.api.*'
 }
 
