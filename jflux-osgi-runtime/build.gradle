@@ -2,7 +2,7 @@ plugins {
   id 'com.athaydes.osgi-run' version '1.5.4'  // https://github.com/renatoathaydes/osgi-run
 }
 
-defaultTasks 'build'
+defaultTasks 'delete'
 repositories.mavenCentral()
 
 dependencies {
@@ -30,7 +30,15 @@ runOsgi {
   outDir = '../runtime'
 }
 
+task build() {
+  mkdir('./build')
+}
+
+tasks.createOsgiRuntime.dependsOn(build)
+
 task copyConfig(type: Copy) {
+  dependsOn createOsgiRuntime
+
   from './runtime/original-config.properties'
   into './runtime/conf'
   rename { String fileName ->
@@ -38,10 +46,7 @@ task copyConfig(type: Copy) {
   }
 }
 
-task build(type: Delete) {
-  mkdir('./build')
-
-  dependsOn createOsgiRuntime
+task delete(type: Delete) {
   dependsOn copyConfig
 
   delete './runtime/run.bat', './runtime/run.sh'

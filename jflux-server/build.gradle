@@ -14,14 +14,8 @@ defaultTasks 'deployBundle'
 repositories.mavenCentral()
 
 sourceSets {
-  main {
-    java.srcDirs= ['src/main']
-    xtendOutputDir = 'build/xtend-gen'
-  }
-  test {
-    java.srcDirs= ['src/test']
-    xtendOutputDir = 'build/test/xtend-gen'
-  }
+  main.java.srcDirs= ['src/main']
+  test.java.srcDirs= ['src/test']
 }
 
 publishing {
@@ -72,15 +66,11 @@ dependencies {
   compile 'info.picocli:picocli:0.9.5'
 }
 
-bundle {
-  instruction '-dsannotations', '*'
-  instruction 'Bundle-Name', 'Json-Flux'
-  instruction 'Export-Package', 'com.github.shumy.jflux.api.*'
-}
+bundle.instruction '-include', 'build.bnd'
 
 task deployBundle(type: Copy) {
+  dependsOn publishToMavenLocal
+  
   from jar
   into '../jflux-osgi-runtime/runtime/bundle'
 }
-
-tasks.deployBundle.dependsOn(publishToMavenLocal)

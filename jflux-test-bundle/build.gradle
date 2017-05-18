@@ -25,14 +25,12 @@ dependencies {
   compile 'org.slf4j:slf4j-api:1.7.1'
   compile 'org.eclipse.xtend:org.eclipse.xtend.lib:2.11.0'
   
-  //mandatory
+  //mandatory for JSON-FLUX plugins
   compile 'org.osgi:org.osgi.service.component.annotations:1.3.0'
   compile 'com.github.shumy:jflux-server:1.0'
 }
 
-bundle {
-  instruction 'Bundle-Name', 'JFlux-Test-Bundle'
-}
+bundle.instruction '-include', 'build.bnd'
 
 task deployBundle(type: Copy) {
   from jar
