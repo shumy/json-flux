@@ -1,7 +1,5 @@
 package com.github.shumy.jflux
 
-import com.github.shumy.jflux.api.IChannel
-import com.github.shumy.jflux.api.store.IMethod
 import com.github.shumy.jflux.api.store.IServiceStore
 import org.osgi.service.component.annotations.Component
 import org.osgi.service.component.annotations.Reference
@@ -27,20 +25,18 @@ class JFluxCommand {
     }
     
     if (cmd.srv !== null) {
-      val paths = store.getPaths(cmd.srv)
-      if (!paths.empty) {
-        println(cmd.srv)
-      
+      val srv = store.getService(cmd.srv)
+      if (srv !== null) {
+        println(srv.name)
+        
         println('''  Channels:''')
-        paths.forEach[key, value |
-          if (value instanceof IChannel<?>)
-            println('''    «key» -> (msgType: «value.msgType.simpleName»)''')
+        srv.channels.forEach[
+          println('''    «name» -> (msgType: «msgType»)''')
         ]
-      
+        
         println('''  Methods:''')
-        paths.forEach[key, value |
-          if (value instanceof IMethod)
-            println('''    «key» -> (type: «value.type.toString.toLowerCase», params: [«FOR ptn: value.parameterTypesName SEPARATOR ','»«ptn»«ENDFOR»], return: «value.returnTypeName»)''')
+        srv.methods.forEach[
+          println('''    «name» -> (type: «modelType», params: [«FOR ptn: params SEPARATOR ','»«ptn.name»«ENDFOR»], return: «returnType»)''')
         ]
       }
       

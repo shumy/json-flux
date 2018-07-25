@@ -4,14 +4,13 @@ interface IChannel<D> {
   def Class<?> getMsgType()
   def void publish(D data)
   
-  def void onSubscribe((ISubscription<D>)=>void onSubscribe)
-  def void onCancel((ISubscription<D>)=>void onCancel)
+  def void onSubscribe((ISubscription)=>void onSubscribe)
+  def void onCancel((ISubscription)=>void onCancel)
   
-  def ISubscription<D> get(String suid)
-  def ISubscription<D> subscribe((D)=>void onData)
+  def ISubscription get(String suid)
+  def ISubscription subscribe((D)=>void onData)
 }
 
-interface ISubscription<D> extends ICancel {
+interface ISubscription extends ICancel {
   def String suid()
-  def void publish(D data)
 }

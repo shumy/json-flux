@@ -9,15 +9,19 @@ import com.github.shumy.jflux.api.Request
 import com.github.shumy.jflux.api.Service
 import com.github.shumy.jflux.api.Stream
 import com.github.shumy.jflux.api.Init
+import com.github.shumy.jflux.api.Doc
 import java.util.List
 
 @Service
+@Doc('A service with multiple compliment methods and channels.')
 class HelloService {
-  @Channel(String) IChannel<String> chHello
+  @Channel(String)
+  @Doc('The compliment channel.')
+  IChannel<String> chHello
   
   @Init
   def void initializer() {
-    chHello.onSubscribe[ println('Init: ' + suid) publish('Init') ]
+    chHello.onSubscribe[ println('Init: ' + suid) ]
     chHello.onCancel[ println('Close: ' + suid) ]
     chHello.subscribe[
       println('''chHello («it»)''')
@@ -25,12 +29,14 @@ class HelloService {
   }
   
   @Publish
-  def void pubHello(String name) {
+  @Doc('Publish a compliment in the chHello channel.')
+  def void pubHello(@Doc('The name to compliment.') String name) {
     chHello.publish('''pubHello «name»''')
   }
   
   @Request
-  def String simpleHello(String name)
+  @Doc('A simple hello method, returning the compliment.')
+  def String simpleHello(@Doc('The name to compliment.') String name)
     '''simpleHello «name»'''
   
   @Request

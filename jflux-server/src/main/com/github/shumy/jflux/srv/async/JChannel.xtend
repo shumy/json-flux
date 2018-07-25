@@ -17,8 +17,8 @@ class JChannel implements IChannel<Object> {
   package val localSubs = new ConcurrentHashMap<String, JSubscription>
   package val clientSubs = new ConcurrentHashMap<String, JChannelSubscription>
   
-  package var (ISubscription<Object>)=>void onSubscribe = null
-  package var (ISubscription<Object>)=>void onCancel = null
+  package var (ISubscription)=>void onSubscribe = null
+  package var (ISubscription)=>void onCancel = null
   
   val mapper = new ObjectMapper
   @Accessors val Class<?> msgType
@@ -32,11 +32,11 @@ class JChannel implements IChannel<Object> {
     }
   }
   
-  override onSubscribe((ISubscription<Object>)=>void onSubscribe) {
+  override onSubscribe((ISubscription)=>void onSubscribe) {
     this.onSubscribe = onSubscribe
   }
   
-  override onCancel((ISubscription<Object>)=>void onCancel) {
+  override onCancel((ISubscription)=>void onCancel) {
     this.onCancel = onCancel
   }
   
@@ -76,7 +76,7 @@ class JChannel implements IChannel<Object> {
 }
 
 @FinalFieldsConstructor
-class JChannelSubscription implements ISubscription<Object> {
+class JChannelSubscription implements ISubscription {
   val msgId = new AtomicLong(0L)
   
   val JChannel ch
@@ -86,11 +86,6 @@ class JChannelSubscription implements ISubscription<Object> {
   
   override suid() { suid }
   
-  override publish(Object data) {
-    val tree = mapper.valueToTree(data)
-    pCh.send(JMessage.publishData(msgId.incrementAndGet, suid, tree))
-  }
-  
   override cancel() {
     ch.clientSubs.remove(suid)
     ch.onCancel?.apply(this)
@@ -99,22 +94,27 @@ class JChannelSubscription implements ISubscription<Object> {
   def void channelPublish(JsonNode data) {
     pCh.send(JMessage.publishData(msgId.incrementAndGet, suid, data))
   }
+  
+  def void publish(Object data) {
+    val tree = mapper.valueToTree(data)
+    pCh.send(JMessage.publishData(msgId.incrementAndGet, suid, tree))
+  }
 }
 
 @FinalFieldsConstructor
-class JSubscription implements ISubscription<Object> {
+class JSubscription implements ISubscription {
   val JChannel ch
   val String suid
   val (Object)=>void onData
   
   override suid() { suid }
   
-  override publish(Object data) {
-    onData.apply(data)
-  }
-  
   override cancel() {
     ch.localSubs.remove(suid)
     ch.onCancel?.apply(this)
+  }
+  
+  def void publish(Object data) {
+    onData.apply(data)
   }
 }
